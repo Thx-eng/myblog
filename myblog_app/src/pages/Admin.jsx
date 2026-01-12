@@ -198,7 +198,7 @@ export default function Admin() {
     }
 
     return (
-        <div className="pt-32 pb-24">
+        <div className="pb-24" style={{ paddingTop: '50px' }}>
             <div className="container-custom max-w-4xl">
                 {/* 页面标题 */}
                 <div className="flex items-center justify-between mb-12">
