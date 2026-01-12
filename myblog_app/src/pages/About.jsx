@@ -1,8 +1,18 @@
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import ScrollReveal from '../components/ui/ScrollReveal';
 import MagneticButton from '../components/ui/MagneticButton';
 
 export default function About() {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopyEmail = (e) => {
+        e.preventDefault();
+        navigator.clipboard.writeText('2311995@mail.nankai.edu.cn');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     return (
         <div className="pb-24" style={{ paddingTop: '50px' }}>
             <div className="container-custom">
@@ -68,17 +78,37 @@ export default function About() {
 
                             <div className="flex flex-wrap gap-4">
                                 <MagneticButton>
-                                    <a
-                                        href="mailto:hello@example.com"
-                                        className="inline-flex items-center gap-2 px-6 py-3 border border-[var(--color-border)] text-sm rounded-full hover:border-[var(--color-primary)] transition-colors cursor-pointer"
+                                    <button
+                                        onClick={handleCopyEmail}
+                                        className="relative inline-flex items-center gap-2 px-6 py-3 border border-[var(--color-border)] text-sm rounded-full hover:border-[var(--color-primary)] transition-colors cursor-pointer"
                                     >
-                                        发送邮件
-                                    </a>
+                                        <AnimatePresence mode='wait'>
+                                            {copied ? (
+                                                <motion.span
+                                                    key="copied"
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -10 }}
+                                                >
+                                                    已复制
+                                                </motion.span>
+                                            ) : (
+                                                <motion.span
+                                                    key="label"
+                                                    initial={{ opacity: 0, y: -10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: 10 }}
+                                                >
+                                                    发送邮件
+                                                </motion.span>
+                                            )}
+                                        </AnimatePresence>
+                                    </button>
                                 </MagneticButton>
 
                                 <MagneticButton>
                                     <a
-                                        href="https://github.com"
+                                        href="https://github.com/Thx-eng/myblog.git"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center gap-2 px-6 py-3 border border-[var(--color-border)] text-sm rounded-full hover:border-[var(--color-primary)] transition-colors cursor-pointer"
