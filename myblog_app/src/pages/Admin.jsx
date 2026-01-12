@@ -166,7 +166,7 @@ export default function Admin() {
     if (!isAuthenticated) {
         return (
             <div className="pt-40 pb-24 text-center">
-                <div className="container-custom max-w-md">
+                <div className="container-custom w-full max-w-md px-4">
                     <h1 className="font-heading text-3xl mb-8">管理员登录</h1>
                     <form onSubmit={handleLogin} className="space-y-4">
                         <input
