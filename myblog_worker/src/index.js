@@ -15,6 +15,17 @@ app.use('/*', cors({
     credentials: true,
 }));
 
+// 简单的认证中间件
+const auth = async (c, next) => {
+    const authKey = c.req.header('X-Auth-Key');
+    const adminPassword = c.env.ADMIN_PASSWORD || '123456';
+
+    if (authKey !== adminPassword) {
+        return c.json({ error: '未授权：密码错误' }, 401);
+    }
+    await next();
+};
+
 // 健康检查
 app.get('/api/health', (c) => {
     return c.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -73,7 +84,7 @@ app.get('/api/posts/:id', async (c) => {
 });
 
 // 创建文章
-app.post('/api/posts', async (c) => {
+app.post('/api/posts', auth, async (c) => {
     try {
         const { title, excerpt, content, category, readTime } = await c.req.json();
 
@@ -97,7 +108,7 @@ app.post('/api/posts', async (c) => {
 });
 
 // 更新文章
-app.put('/api/posts/:id', async (c) => {
+app.put('/api/posts/:id', auth, async (c) => {
     try {
         const id = c.req.param('id');
         const { title, excerpt, content, category, readTime } = await c.req.json();
@@ -121,7 +132,7 @@ app.put('/api/posts/:id', async (c) => {
 });
 
 // 删除文章
-app.delete('/api/posts/:id', async (c) => {
+app.delete('/api/posts/:id', auth, async (c) => {
     try {
         const id = c.req.param('id');
 

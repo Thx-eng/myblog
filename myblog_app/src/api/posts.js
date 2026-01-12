@@ -3,6 +3,15 @@ const API_BASE = import.meta.env.PROD
     ? (import.meta.env.VITE_API_URL || 'https://myblog-api.myblog-thx.workers.dev/api')
     : 'http://127.0.0.1:8787/api';  // Wrangler dev 绑定地址
 
+// 获取认证请求头
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('admin_password');
+    return {
+        'Content-Type': 'application/json',
+        'X-Auth-Key': token || ''
+    };
+};
+
 // 获取所有文章
 export async function getPosts(category = null) {
     const url = category && category !== '全部'
@@ -32,9 +41,7 @@ export async function getPost(id) {
 export async function createPost(postData) {
     const response = await fetch(`${API_BASE}/posts`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(postData),
     });
     if (!response.ok) {
@@ -47,9 +54,7 @@ export async function createPost(postData) {
 export async function updatePost(id, postData) {
     const response = await fetch(`${API_BASE}/posts/${id}`, {
         method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(postData),
     });
     if (!response.ok) {
@@ -62,6 +67,7 @@ export async function updatePost(id, postData) {
 export async function deletePost(id) {
     const response = await fetch(`${API_BASE}/posts/${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
     });
     if (!response.ok) {
         throw new Error('删除文章失败');

@@ -14,6 +14,9 @@ const emptyForm = {
 };
 
 export default function Admin() {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [passwordInput, setPasswordInput] = useState('');
+
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -22,10 +25,30 @@ export default function Admin() {
     const [formData, setFormData] = useState(emptyForm);
     const [submitting, setSubmitting] = useState(false);
 
-    // 加载文章列表
+    // 检查认证状态
     useEffect(() => {
-        loadPosts();
-    }, []);
+        const token = localStorage.getItem('admin_password');
+        if (token) {
+            setIsAuthenticated(true);
+            loadPosts();
+        } else {
+            setLoading(false);
+        }
+    }, [isAuthenticated]);
+
+    const handleLogin = (e) => {
+        e.preventDefault();
+        if (passwordInput) {
+            localStorage.setItem('admin_password', passwordInput);
+            setIsAuthenticated(true);
+        }
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('admin_password');
+        setIsAuthenticated(false);
+        setPasswordInput('');
+    };
 
     const loadPosts = async () => {
         try {
@@ -121,6 +144,40 @@ export default function Admin() {
         );
     }
 
+    if (!isAuthenticated) {
+        return (
+            <div className="pt-40 pb-24 text-center">
+                <div className="container-custom max-w-md">
+                    <h1 className="font-heading text-3xl mb-8">管理员登录</h1>
+                    <form onSubmit={handleLogin} className="space-y-4">
+                        <input
+                            type="password"
+                            value={passwordInput}
+                            onChange={(e) => setPasswordInput(e.target.value)}
+                            className="w-full px-4 py-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--color-accent)] transition-colors text-center"
+                            placeholder="请输入管理密码"
+                            autoFocus
+                        />
+                        <button
+                            type="submit"
+                            className="w-full px-6 py-3 bg-[var(--color-accent)] text-white rounded-lg hover:opacity-90 transition-opacity cursor-pointer font-medium"
+                        >
+                            进入后台
+                        </button>
+                    </form>
+                    <div className="mt-8">
+                        <Link
+                            to="/blog"
+                            className="text-[var(--color-muted)] hover:text-[var(--color-primary)] transition-colors text-sm"
+                        >
+                            ← 返回博客
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="pb-24" style={{ paddingTop: '50px' }}>
             <div className="container-custom max-w-4xl">
@@ -132,12 +189,20 @@ export default function Admin() {
                             共 {posts.length} 篇文章
                         </p>
                     </div>
-                    <button
-                        onClick={() => showForm ? closeForm() : openCreateForm()}
-                        className="px-6 py-3 bg-[var(--color-accent)] text-white rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
-                    >
-                        {showForm ? '取消' : '+ 新建文章'}
-                    </button>
+                    <div className="flex gap-4">
+                        <button
+                            onClick={handleLogout}
+                            className="px-6 py-3 border border-[var(--color-border)] text-[var(--color-secondary)] rounded-lg hover:border-[var(--color-primary)] transition-colors cursor-pointer"
+                        >
+                            退出
+                        </button>
+                        <button
+                            onClick={() => showForm ? closeForm() : openCreateForm()}
+                            className="px-6 py-3 bg-[var(--color-accent)] text-white rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+                        >
+                            {showForm ? '取消' : '+ 新建文章'}
+                        </button>
+                    </div>
                 </div>
 
                 {/* 新建/编辑文章表单 */}
