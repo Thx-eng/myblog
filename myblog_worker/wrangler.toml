@@ -1,0 +1,9 @@
+name = "myblog-api"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# D1 数据库绑定
+[[d1_databases]]
+binding = "DB"
+database_name = "blog-db"
+database_id = "bedb1d58-ccb9-4fd8-aa9a-cbd04b6c7d20"  # 部署时替换为实际 ID
