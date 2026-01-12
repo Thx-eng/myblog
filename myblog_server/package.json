@@ -1,0 +1,16 @@
+{
+    "name": "myblog_server",
+    "version": "1.0.0",
+    "description": "Blog API server with Express and SQLite",
+    "main": "server.js",
+    "type": "module",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "node --watch server.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "express": "^4.21.0",
+        "better-sqlite3": "^11.3.0"
+    }
+}
