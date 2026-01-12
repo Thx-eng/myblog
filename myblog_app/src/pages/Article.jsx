@@ -119,24 +119,22 @@ export default function Article() {
                     </header>
 
                     {/* 文章内容 */}
-                    <ScrollReveal delay={0.5}>
-                        <motion.div
-                            className="prose prose-lg max-w-none"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.6, delay: 0.6 }}
-                        >
-                            {isHtml ? (
-                                // 兼容旧的 HTML 格式
-                                <div dangerouslySetInnerHTML={{ __html: article.content }} />
-                            ) : (
-                                // 新的 Markdown 格式
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                    {article.content}
-                                </ReactMarkdown>
-                            )}
-                        </motion.div>
-                    </ScrollReveal>
+                    <motion.div
+                        className="prose prose-lg max-w-none"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.6 }}
+                    >
+                        {isHtml ? (
+                            // 兼容旧的 HTML 格式
+                            <div dangerouslySetInnerHTML={{ __html: article.content }} />
+                        ) : (
+                            // 新的 Markdown 格式
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {article.content}
+                            </ReactMarkdown>
+                        )}
+                    </motion.div>
 
                     {/* 文章底部 */}
                     <motion.footer
