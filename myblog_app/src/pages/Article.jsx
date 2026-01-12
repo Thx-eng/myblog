@@ -30,7 +30,7 @@ export default function Article() {
 
     if (loading) {
         return (
-            <div className="pt-40 pb-24 text-center">
+            <div className="pb-24 text-center" style={{ paddingTop: '120px' }}>
                 <div className="container-custom">
                     <div className="animate-pulse text-[var(--color-muted)]">加载中...</div>
                 </div>
@@ -40,7 +40,7 @@ export default function Article() {
 
     if (error) {
         return (
-            <div className="pt-40 pb-24 text-center">
+            <div className="pb-24 text-center" style={{ paddingTop: '120px' }}>
                 <div className="container-custom">
                     <h1 className="font-heading text-4xl mb-4 text-red-400">加载失败</h1>
                     <p className="text-[var(--color-muted)] mb-4">{error}</p>
@@ -54,7 +54,7 @@ export default function Article() {
 
     if (!article) {
         return (
-            <div className="pt-40 pb-24 text-center">
+            <div className="pb-24 text-center" style={{ paddingTop: '120px' }}>
                 <div className="container-custom">
                     <h1 className="font-heading text-4xl mb-4">文章不存在</h1>
                     <Link to="/blog" className="text-[var(--color-accent)] link-underline">
