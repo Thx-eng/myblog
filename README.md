@@ -2,20 +2,14 @@
 
 一个现代化的个人博客应用，采用 React + Express + SQLite 全栈技术构建。
 
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
-![Express](https://img.shields.io/badge/Express-4-000000?logo=express)
-![SQLite](https://img.shields.io/badge/SQLite-3-003B57?logo=sqlite)
-![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite)
+## 功能特性
 
-## ✨ 功能特性
+- **文章管理** - 创建、编辑、删除文章，支持 Markdown 格式
+- **分类筛选** - 按类别浏览文章（前端开发、设计思考、随想、技术、生活）
+- **精美设计** - 现代化 UI，支持动画效果和深色模式
+- **响应式布局** - 完美适配移动端和桌面端
 
-- 📝 **文章管理** - 创建、编辑、删除文章
-- 🏷️ **分类筛选** - 按类别浏览文章
-- 🎨 **精美设计** - 现代化 UI，支持动画效果
-- 📱 **响应式布局** - 完美适配移动端和桌面端
-- ⚡ **快速加载** - Vite 构建，极速开发体验
-
-## 📁 项目结构
+## 项目结构
 
 ```
 myblog/
@@ -34,7 +28,7 @@ myblog/
     └── package.json
 ```
 
-## 🚀 快速开始
+## 快速开始
 
 ### 环境要求
 
@@ -69,12 +63,12 @@ npm run dev
 
 | 页面 | 地址 |
 |------|------|
-| 🏠 首页 | http://localhost:5173 |
-| 📖 博客列表 | http://localhost:5173/blog |
-| 📝 文章管理 | http://localhost:5173/admin |
-| 👤 关于 | http://localhost:5173/about |
+| 首页 | http://localhost:5173 |
+| 博客列表 | http://localhost:5173/blog |
+| 文章管理 | http://localhost:5173/admin |
+| 关于 | http://localhost:5173/about |
 
-## 📡 API 接口
+## API 接口
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -84,20 +78,21 @@ npm run dev
 | PUT | `/api/posts/:id` | 更新文章 |
 | DELETE | `/api/posts/:id` | 删除文章 |
 
-## 🛠️ 技术栈
+## 技术栈
 
 **前端**
-- React 19 - UI 框架
-- React Router 7 - 路由管理
-- Framer Motion - 动画效果
-- TailwindCSS 4 - 样式框架
-- Vite 7 - 构建工具
+- React 19
+- React Router 7
+- Framer Motion
+- TailwindCSS 4
+- Vite 7
+- react-markdown (Markdown 渲染)
 
 **后端**
-- Express 4 - Web 框架
-- better-sqlite3 - SQLite 数据库驱动
-- CORS - 跨域支持
+- Express 4
+- better-sqlite3
+- CORS
 
-## 📄 License
+## License
 
 MIT
