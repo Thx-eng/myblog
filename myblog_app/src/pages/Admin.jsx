@@ -1,22 +1,25 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { getPosts, createPost, deletePost } from '../api/posts';
+import { getPosts, getPost, createPost, updatePost, deletePost } from '../api/posts';
 
 const categories = ['前端开发', '设计思考', '随想', '技术', '生活'];
+
+const emptyForm = {
+    title: '',
+    excerpt: '',
+    content: '',
+    category: '随想',
+    readTime: '5 分钟',
+};
 
 export default function Admin() {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
-    const [formData, setFormData] = useState({
-        title: '',
-        excerpt: '',
-        content: '',
-        category: '随想',
-        readTime: '5 分钟',
-    });
+    const [editingId, setEditingId] = useState(null); // 正在编辑的文章ID
+    const [formData, setFormData] = useState(emptyForm);
     const [submitting, setSubmitting] = useState(false);
 
     // 加载文章列表
@@ -36,7 +39,41 @@ export default function Admin() {
         }
     };
 
-    // 提交新文章
+    // 打开新建表单
+    const openCreateForm = () => {
+        setEditingId(null);
+        setFormData(emptyForm);
+        setShowForm(true);
+    };
+
+    // 打开编辑表单
+    const openEditForm = async (id) => {
+        try {
+            const post = await getPost(id);
+            if (post) {
+                setEditingId(id);
+                setFormData({
+                    title: post.title || '',
+                    excerpt: post.excerpt || '',
+                    content: post.content || '',
+                    category: post.category || '随想',
+                    readTime: post.readTime || '5 分钟',
+                });
+                setShowForm(true);
+            }
+        } catch (err) {
+            alert('加载文章失败: ' + err.message);
+        }
+    };
+
+    // 关闭表单
+    const closeForm = () => {
+        setShowForm(false);
+        setEditingId(null);
+        setFormData(emptyForm);
+    };
+
+    // 提交表单（新建或编辑）
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.title.trim() || !formData.content.trim()) {
@@ -46,18 +83,17 @@ export default function Admin() {
 
         try {
             setSubmitting(true);
-            await createPost(formData);
-            setFormData({
-                title: '',
-                excerpt: '',
-                content: '',
-                category: '随想',
-                readTime: '5 分钟',
-            });
-            setShowForm(false);
+            if (editingId) {
+                // 更新文章
+                await updatePost(editingId, formData);
+            } else {
+                // 创建文章
+                await createPost(formData);
+            }
+            closeForm();
             await loadPosts();
         } catch (err) {
-            alert('创建失败: ' + err.message);
+            alert((editingId ? '更新' : '创建') + '失败: ' + err.message);
         } finally {
             setSubmitting(false);
         }
@@ -97,14 +133,14 @@ export default function Admin() {
                         </p>
                     </div>
                     <button
-                        onClick={() => setShowForm(!showForm)}
+                        onClick={() => showForm ? closeForm() : openCreateForm()}
                         className="px-6 py-3 bg-[var(--color-accent)] text-white rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
                     >
                         {showForm ? '取消' : '+ 新建文章'}
                     </button>
                 </div>
 
-                {/* 新建文章表单 */}
+                {/* 新建/编辑文章表单 */}
                 <AnimatePresence>
                     {showForm && (
                         <motion.form
@@ -114,7 +150,9 @@ export default function Admin() {
                             onSubmit={handleSubmit}
                             className="mb-12 p-8 bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)]"
                         >
-                            <h2 className="font-heading text-2xl mb-6">创建新文章</h2>
+                            <h2 className="font-heading text-2xl mb-6">
+                                {editingId ? '编辑文章' : '创建新文章'}
+                            </h2>
 
                             <div className="space-y-6">
                                 {/* 标题 */}
@@ -193,7 +231,7 @@ export default function Admin() {
                                 <div className="flex justify-end gap-4">
                                     <button
                                         type="button"
-                                        onClick={() => setShowForm(false)}
+                                        onClick={closeForm}
                                         className="px-6 py-3 text-[var(--color-muted)] hover:text-[var(--color-primary)] transition-colors cursor-pointer"
                                     >
                                         取消
@@ -203,7 +241,7 @@ export default function Admin() {
                                         disabled={submitting}
                                         className="px-8 py-3 bg-[var(--color-accent)] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
                                     >
-                                        {submitting ? '发布中...' : '发布文章'}
+                                        {submitting ? (editingId ? '保存中...' : '发布中...') : (editingId ? '保存修改' : '发布文章')}
                                     </button>
                                 </div>
                             </div>
@@ -247,12 +285,20 @@ export default function Admin() {
                                         <span>{post.readTime}</span>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => handleDelete(post.id, post.title)}
-                                    className="px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
-                                >
-                                    删除
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => openEditForm(post.id)}
+                                        className="px-4 py-2 text-sm text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 rounded-lg transition-colors cursor-pointer"
+                                    >
+                                        编辑
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(post.id, post.title)}
+                                        className="px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                                    >
+                                        删除
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     ))}

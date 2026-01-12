@@ -38,6 +38,7 @@ export default function Navbar() {
         { path: '/', label: '首页' },
         { path: '/blog', label: '博客' },
         { path: '/about', label: '关于' },
+        { path: '/admin', label: '管理' },
     ];
 
     return (

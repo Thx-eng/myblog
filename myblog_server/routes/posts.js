@@ -38,7 +38,7 @@ router.get('/:id', (req, res) => {
     try {
         const { id } = req.params;
         const post = db.prepare(`
-      SELECT id, title, content, category, readTime, 
+      SELECT id, title, excerpt, content, category, readTime, 
              DATE(createdAt) as date 
       FROM posts 
       WHERE id = ?

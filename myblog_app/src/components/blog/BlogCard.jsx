@@ -39,24 +39,24 @@ export default function BlogCard({ post }) {
                 />
 
                 {/* 卡片内容 */}
-                <div className="relative p-6 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface)] transition-all duration-300 group-hover:border-[var(--color-accent)]/30">
+                <div className="relative h-full min-h-[120px] p-6 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface)] transition-all duration-300 group-hover:border-[var(--color-accent)]/30 flex flex-col">
                     {/* 分类标签 */}
                     <span className="inline-block text-xs tracking-wider text-[var(--color-muted)] uppercase mb-4">
                         {post.category}
                     </span>
 
                     {/* 标题 */}
-                    <h3 className="font-heading text-xl mb-3 text-[var(--color-primary)] group-hover:text-[var(--color-accent)] transition-colors duration-300">
+                    <h3 className="font-heading text-xl mb-3 text-[var(--color-primary)] group-hover:text-[var(--color-accent)] transition-colors duration-300 line-clamp-2">
                         {post.title}
                     </h3>
 
                     {/* 摘要 */}
-                    <p className="text-sm text-[var(--color-secondary)] leading-relaxed mb-6 line-clamp-2">
+                    <p className="text-sm text-[var(--color-secondary)] leading-relaxed mb-6 line-clamp-2 flex-grow">
                         {post.excerpt}
                     </p>
 
                     {/* 底部信息 */}
-                    <div className="flex items-center justify-between text-xs text-[var(--color-muted)]">
+                    <div className="flex items-center justify-between text-xs text-[var(--color-muted)] mt-auto">
                         <time dateTime={post.date}>
                             {new Date(post.date).toLocaleDateString('zh-CN', {
                                 year: 'numeric',
