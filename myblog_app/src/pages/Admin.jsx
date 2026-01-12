@@ -165,7 +165,7 @@ export default function Admin() {
 
     if (!isAuthenticated) {
         return (
-            <div className="pt-40 pb-24 text-center">
+            <div className="min-h-screen flex flex-col justify-center items-center pt-24 pb-24 text-center">
                 <div className="container-custom w-full max-w-md px-4">
                     <h1 className="font-heading text-3xl mb-8">管理员登录</h1>
                     <form onSubmit={handleLogin} className="space-y-4">
@@ -198,7 +198,7 @@ export default function Admin() {
     }
 
     return (
-        <div className="pb-24" style={{ paddingTop: '50px' }}>
+        <div className="pt-32 pb-24">
             <div className="container-custom max-w-4xl">
                 {/* 页面标题 */}
                 <div className="flex items-center justify-between mb-12">
