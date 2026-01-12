@@ -1,4 +1,7 @@
-const API_BASE = 'http://localhost:3001/api';
+// 生产环境使用环境变量配置的 API 地址，开发环境使用本地地址
+const API_BASE = import.meta.env.PROD
+    ? (import.meta.env.VITE_API_URL || 'https://your-railway-app.up.railway.app/api')
+    : 'http://localhost:3001/api';
 
 // 获取所有文章
 export async function getPosts(category = null) {

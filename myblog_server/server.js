@@ -3,10 +3,19 @@ import cors from 'cors';
 import postsRouter from './routes/posts.js';
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
-// 中间件
-app.use(cors());
+// CORS 配置 - 允许前端域名访问
+const allowedOrigins = [
+    'http://localhost:5173',  // Vite 开发服务器
+    'http://localhost:4173',  // Vite 预览服务器
+    process.env.FRONTEND_URL  // 生产环境前端地址（在 Railway 中配置）
+].filter(Boolean);
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true
+}));
 app.use(express.json());
 
 // 路由
