@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { getPosts, getPost, createPost, updatePost, deletePost } from '../api/posts';
+import { getPosts, getPost, createPost, updatePost, deletePost, verifyPassword } from '../api/posts';
 
 const categories = ['前端开发', '设计思考', '随想', '技术', '生活'];
 
@@ -27,20 +27,38 @@ export default function Admin() {
 
     // 检查认证状态
     useEffect(() => {
-        const token = localStorage.getItem('admin_password');
-        if (token) {
-            setIsAuthenticated(true);
-            loadPosts();
-        } else {
-            setLoading(false);
-        }
-    }, [isAuthenticated]);
+        const checkAuth = async () => {
+            const token = localStorage.getItem('admin_password');
+            if (token) {
+                try {
+                    await verifyPassword(token);
+                    setIsAuthenticated(true);
+                    loadPosts();
+                } catch (err) {
+                    console.error('自动登录失败:', err);
+                    localStorage.removeItem('admin_password');
+                    setIsAuthenticated(false);
+                    setLoading(false);
+                }
+            } else {
+                setLoading(false);
+            }
+        };
+        checkAuth();
+    }, []);
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         if (passwordInput) {
-            localStorage.setItem('admin_password', passwordInput);
-            setIsAuthenticated(true);
+            try {
+                await verifyPassword(passwordInput);
+                localStorage.setItem('admin_password', passwordInput);
+                setIsAuthenticated(true);
+                loadPosts(); // 登录成功后立即加载文章
+            } catch (err) {
+                alert('密码错误');
+                setPasswordInput('');
+            }
         }
     };
 
@@ -48,6 +66,7 @@ export default function Admin() {
         localStorage.removeItem('admin_password');
         setIsAuthenticated(false);
         setPasswordInput('');
+        setPosts([]); // 退出时清空列表
     };
 
     const loadPosts = async () => {

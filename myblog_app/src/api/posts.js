@@ -12,6 +12,21 @@ const getAuthHeaders = () => {
     };
 };
 
+// 验证密码
+export async function verifyPassword(password) {
+    const response = await fetch(`${API_BASE}/verify`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Auth-Key': password
+        }
+    });
+    if (!response.ok) {
+        throw new Error('密码错误');
+    }
+    return response.json();
+}
+
 // 获取所有文章
 export async function getPosts(category = null) {
     const url = category && category !== '全部'

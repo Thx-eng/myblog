@@ -31,6 +31,11 @@ app.get('/api/health', (c) => {
     return c.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// 验证密码
+app.post('/api/verify', auth, (c) => {
+    return c.json({ status: 'ok' });
+});
+
 // 获取所有文章
 app.get('/api/posts', async (c) => {
     try {
