@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import ScrollReveal from '../components/ui/ScrollReveal';
 import { getPost } from '../api/posts';
 
@@ -63,6 +65,9 @@ export default function Article() {
         );
     }
 
+    // 检测内容是否为 HTML（以 < 开头）
+    const isHtml = article.content.trim().startsWith('<');
+
     return (
         <article className="pb-24" style={{ paddingTop: '50px' }}>
             <div className="container-custom">
@@ -120,13 +125,17 @@ export default function Article() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.6, delay: 0.6 }}
-                            dangerouslySetInnerHTML={{ __html: article.content }}
-                            style={{
-                                '--tw-prose-body': 'var(--color-secondary)',
-                                '--tw-prose-headings': 'var(--color-primary)',
-                                '--tw-prose-links': 'var(--color-accent)',
-                            }}
-                        />
+                        >
+                            {isHtml ? (
+                                // 兼容旧的 HTML 格式
+                                <div dangerouslySetInnerHTML={{ __html: article.content }} />
+                            ) : (
+                                // 新的 Markdown 格式
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {article.content}
+                                </ReactMarkdown>
+                            )}
+                        </motion.div>
                     </ScrollReveal>
 
                     {/* 文章底部 */}
@@ -142,6 +151,14 @@ export default function Article() {
 
             {/* 文章内容样式 */}
             <style>{`
+        .prose h1 {
+          font-family: var(--font-heading);
+          font-size: 2rem;
+          margin-top: 2.5rem;
+          margin-bottom: 1rem;
+          color: var(--color-primary);
+        }
+        
         .prose h2 {
           font-family: var(--font-heading);
           font-size: 1.5rem;
@@ -150,10 +167,58 @@ export default function Article() {
           color: var(--color-primary);
         }
         
+        .prose h3 {
+          font-family: var(--font-heading);
+          font-size: 1.25rem;
+          margin-top: 2rem;
+          margin-bottom: 0.75rem;
+          color: var(--color-primary);
+        }
+        
         .prose p {
           margin-bottom: 1.5rem;
           line-height: 1.8;
           color: var(--color-secondary);
+        }
+        
+        .prose ul, .prose ol {
+          margin-bottom: 1.5rem;
+          padding-left: 1.5rem;
+          color: var(--color-secondary);
+        }
+        
+        .prose li {
+          margin-bottom: 0.5rem;
+          line-height: 1.7;
+        }
+        
+        .prose code {
+          background: var(--color-surface);
+          padding: 0.2rem 0.4rem;
+          border-radius: 4px;
+          font-size: 0.9em;
+          color: var(--color-accent);
+        }
+        
+        .prose pre {
+          background: var(--color-surface);
+          padding: 1rem;
+          border-radius: 8px;
+          overflow-x: auto;
+          margin-bottom: 1.5rem;
+        }
+        
+        .prose pre code {
+          background: transparent;
+          padding: 0;
+        }
+        
+        .prose blockquote {
+          border-left: 3px solid var(--color-accent);
+          padding-left: 1rem;
+          margin: 1.5rem 0;
+          color: var(--color-muted);
+          font-style: italic;
         }
         
         .prose a {
@@ -164,6 +229,29 @@ export default function Article() {
         
         .prose a:hover {
           color: var(--color-accent-light);
+        }
+        
+        .prose img {
+          max-width: 100%;
+          border-radius: 8px;
+          margin: 1.5rem 0;
+        }
+        
+        .prose table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 1.5rem 0;
+        }
+        
+        .prose th, .prose td {
+          border: 1px solid var(--color-border);
+          padding: 0.75rem;
+          text-align: left;
+        }
+        
+        .prose th {
+          background: var(--color-surface);
+          font-weight: 600;
         }
       `}</style>
         </article>

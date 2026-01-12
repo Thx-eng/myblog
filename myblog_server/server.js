@@ -30,6 +30,6 @@ app.use((err, req, res, next) => {
 
 // 启动服务器
 app.listen(PORT, () => {
-    console.log(`🚀 博客 API 服务器运行在 http://localhost:${PORT}`);
-    console.log(`📝 文章接口: http://localhost:${PORT}/api/posts`);
+    console.log(`博客 API 服务器运行在 http://localhost:${PORT}`);
+    console.log(`文章接口: http://localhost:${PORT}/api/posts`);
 });

@@ -4,7 +4,7 @@ import ScrollReveal from '../components/ui/ScrollReveal';
 import BlogCard from '../components/blog/BlogCard';
 import { getPosts } from '../api/posts';
 
-const categories = ['全部', '前端开发', '设计思考', '随想'];
+const categories = ['全部', '前端开发', '设计思考', '随想', '技术', '生活'];
 
 export default function Blog() {
     const [activeCategory, setActiveCategory] = useState('全部');
