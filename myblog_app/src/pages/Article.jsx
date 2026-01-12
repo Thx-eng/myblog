@@ -139,13 +139,16 @@ export default function Article() {
                     </ScrollReveal>
 
                     {/* 文章底部 */}
-                    <ScrollReveal delay={0.6}>
-                        <footer className="mt-16 pt-8 border-t border-[var(--color-border)]">
-                            <p className="text-sm text-[var(--color-muted)] text-center">
-                                感谢阅读，如有任何想法欢迎交流
-                            </p>
-                        </footer>
-                    </ScrollReveal>
+                    <motion.footer
+                        className="mt-16 pt-8 border-t border-[var(--color-border)]"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 1.2 }}
+                    >
+                        <p className="text-sm text-[var(--color-muted)] text-center">
+                            感谢阅读，如有任何想法欢迎交流
+                        </p>
+                    </motion.footer>
                 </div>
             </div>
 
