@@ -125,7 +125,7 @@ export default function Footer() {
                         © {currentYear} 墨迹 · Built with React & Tailwind
                     </div>
                     <div>
-                        Shanghai, China
+                        Tianjin, China
                     </div>
                 </div>
 
