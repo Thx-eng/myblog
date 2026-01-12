@@ -9,7 +9,8 @@ app.use('/*', cors({
         'http://localhost:5173',
         'http://localhost:4173',
         'http://localhost:5174', // 已支持
-        'https://myblog.myblog-thx.workers.dev' // 生产环境前端
+        'https://myblog-app.pages.dev', // 生产环境前端 (Cloudflare Pages)
+        'https://myblog.myblog-thx.workers.dev'
     ],
     credentials: true,
 }));
