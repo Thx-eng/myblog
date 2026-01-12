@@ -5,7 +5,12 @@ const app = new Hono();
 
 // CORS 配置
 app.use('/*', cors({
-    origin: ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:5174'],
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:4173',
+        'http://localhost:5174', // 已支持
+        'https://myblog.myblog-thx.workers.dev' // 生产环境前端
+    ],
     credentials: true,
 }));
 
