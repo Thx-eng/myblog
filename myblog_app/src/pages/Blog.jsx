@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ScrollReveal from '../components/ui/ScrollReveal';
 import BlogCard from '../components/blog/BlogCard';
+import { BlogCardSkeleton } from '../components/ui/Skeleton';
 import { getPosts } from '../api/posts';
 
 const categories = ['全部', '前端开发', '设计思考', '随想', '技术', '生活'];
@@ -32,19 +33,6 @@ export default function Blog() {
     const filteredPosts = activeCategory === '全部'
         ? allPosts
         : allPosts.filter(post => post.category === activeCategory);
-
-    if (loading) {
-        return (
-            <div className="pb-24" style={{ paddingTop: '50px' }}>
-                <div className="container-custom">
-                    <div className="max-w-2xl mb-16">
-                        <h1 className="font-heading text-4xl md:text-5xl mb-4">博客</h1>
-                        <div className="animate-pulse text-[var(--color-muted)]">加载中...</div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="pb-24" style={{ paddingTop: '50px' }}>
@@ -91,23 +79,28 @@ export default function Blog() {
                 <div className="h-4 md:h-8" />
 
                 {/* 文章网格 */}
-                <motion.div
-                    layout
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                >
-                    {filteredPosts.map((post, index) => (
-                        <motion.div
-                            key={post.id}
-                            layout
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 20 }}
-                            transition={{ duration: 0.3, delay: index * 0.05 }}
-                        >
-                            <BlogCard post={post} />
-                        </motion.div>
-                    ))}
-                </motion.div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {loading ? (
+                        // 骨架屏：显示6个占位卡片
+                        [...Array(6)].map((_, index) => (
+                            <div key={index}>
+                                <BlogCardSkeleton />
+                            </div>
+                        ))
+                    ) : (
+                        // 实际内容
+                        filteredPosts.map((post, index) => (
+                            <motion.div
+                                key={post.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.25, delay: index * 0.02 }}
+                            >
+                                <BlogCard post={post} />
+                            </motion.div>
+                        ))
+                    )}
+                </div>
 
                 {/* 空状态 */}
                 {filteredPosts.length === 0 && !loading && (

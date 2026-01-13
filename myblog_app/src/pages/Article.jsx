@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ScrollReveal from '../components/ui/ScrollReveal';
+import { ArticleSkeleton } from '../components/ui/Skeleton';
 import { getPost } from '../api/posts';
 
 export default function Article() {
@@ -29,13 +30,7 @@ export default function Article() {
     }, [id]);
 
     if (loading) {
-        return (
-            <div className="pb-24 text-center" style={{ paddingTop: '120px' }}>
-                <div className="container-custom">
-                    <div className="animate-pulse text-[var(--color-muted)]">加载中...</div>
-                </div>
-            </div>
-        );
+        return <ArticleSkeleton />;
     }
 
     if (error) {
@@ -74,7 +69,7 @@ export default function Article() {
                 <div className="max-w-2xl mx-auto">
                     {/* 文章头部 */}
                     <header className="mb-12">
-                        <ScrollReveal delay={0.2}>
+                        <ScrollReveal delay={0}>
                             <div className="flex items-start gap-4 mb-6">
                                 <Link
                                     to="/blog"
@@ -99,7 +94,7 @@ export default function Article() {
                             </div>
                         </ScrollReveal>
 
-                        <ScrollReveal delay={0.3}>
+                        <ScrollReveal delay={0.05}>
                             <div className="flex items-center gap-4 text-sm text-[var(--color-muted)] pl-12 md:pl-14">
                                 <time dateTime={article.date}>
                                     {new Date(article.date).toLocaleDateString('zh-CN', {
@@ -113,7 +108,7 @@ export default function Article() {
                             </div>
                         </ScrollReveal>
 
-                        <ScrollReveal delay={0.4}>
+                        <ScrollReveal delay={0.1}>
                             <div className="w-full h-px bg-[var(--color-border)] mt-8" />
                         </ScrollReveal>
                     </header>
@@ -123,7 +118,7 @@ export default function Article() {
                         className="prose prose-lg max-w-none"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.6 }}
+                        transition={{ duration: 0.4, delay: 0.15 }}
                     >
                         {isHtml ? (
                             // 兼容旧的 HTML 格式
@@ -141,7 +136,7 @@ export default function Article() {
                         className="mt-16 pt-8 border-t border-[var(--color-border)]"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 1.2 }}
+                        transition={{ duration: 0.4, delay: 0.2 }}
                     >
                         <p className="text-sm text-[var(--color-muted)] text-center">
                             感谢阅读，如有任何想法欢迎交流
