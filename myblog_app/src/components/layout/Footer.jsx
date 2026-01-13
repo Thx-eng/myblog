@@ -1,7 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import MagneticButton from '../ui/MagneticButton';
+
+// 网站上线时间（修改为您的实际上线日期）
+const SITE_START_DATE = new Date('2026-01-11T00:00:00');
+
+const useRuntime = () => {
+    const [runtime, setRuntime] = useState('');
+
+    useEffect(() => {
+        const calculateRuntime = () => {
+            const now = new Date();
+            const diff = now - SITE_START_DATE;
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            setRuntime(`${days} 天 ${hours} 时 ${minutes} 分 ${seconds} 秒`);
+        };
+
+        calculateRuntime();
+        const timer = setInterval(calculateRuntime, 1000);
+
+        return () => clearInterval(timer);
+    }, []);
+
+    return runtime;
+};
 
 const SocialButton = ({ link }) => {
     const [copied, setCopied] = useState(false);
@@ -62,6 +90,7 @@ const SocialButton = ({ link }) => {
 
 export default function Footer() {
     const currentYear = new Date().getFullYear();
+    const runtime = useRuntime();
 
     const socialLinks = [
         {
@@ -119,13 +148,15 @@ export default function Footer() {
                     </div>
                 </div>
 
-                {/* 第二行：Copyright + Location */}
+                {/* 第二行：Copyright + Runtime + Location */}
                 <div className="flex flex-col md:flex-row justify-between items-center gap-2 text-xs text-[var(--color-muted)]">
                     <div>
                         © {currentYear} 墨迹 · Built with React & Tailwind
                     </div>
-                    <div>
-                        Tianjin, China
+                    <div className="flex items-center gap-2">
+                        <span>已运行 {runtime}</span>
+                        <span className="hidden md:inline">·</span>
+                        <span>Tianjin, China</span>
                     </div>
                 </div>
 
