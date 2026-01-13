@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ScrollReveal from '../components/ui/ScrollReveal';
 import BlogCard from '../components/blog/BlogCard';
-import { BlogCardSkeleton } from '../components/ui/Skeleton';
 import { getPosts } from '../api/posts';
 
 const categories = ['全部', '前端开发', '设计思考', '随想', '技术', '生活'];
@@ -80,26 +79,16 @@ export default function Blog() {
 
                 {/* 文章网格 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {loading ? (
-                        // 骨架屏：显示6个占位卡片
-                        [...Array(6)].map((_, index) => (
-                            <div key={index}>
-                                <BlogCardSkeleton />
-                            </div>
-                        ))
-                    ) : (
-                        // 实际内容
-                        filteredPosts.map((post, index) => (
-                            <motion.div
-                                key={post.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.25, delay: index * 0.02 }}
-                            >
-                                <BlogCard post={post} />
-                            </motion.div>
-                        ))
-                    )}
+                    {!loading && filteredPosts.map((post, index) => (
+                        <motion.div
+                            key={post.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.25, delay: index * 0.02 }}
+                        >
+                            <BlogCard post={post} />
+                        </motion.div>
+                    ))}
                 </div>
 
                 {/* 空状态 */}

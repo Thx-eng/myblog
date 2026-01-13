@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ScrollReveal from '../components/ui/ScrollReveal';
-import { ArticleSkeleton } from '../components/ui/Skeleton';
 import { getPost } from '../api/posts';
 
 export default function Article() {
@@ -30,7 +29,7 @@ export default function Article() {
     }, [id]);
 
     if (loading) {
-        return <ArticleSkeleton />;
+        return <div className="pb-24" style={{ paddingTop: '50px' }} />;
     }
 
     if (error) {
