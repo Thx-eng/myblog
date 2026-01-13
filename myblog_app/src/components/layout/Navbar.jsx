@@ -45,9 +45,9 @@ export default function Navbar() {
             initial={{ y: -100 }}
             animate={{ y: 0 }}
             transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-                ? 'py-4 bg-[var(--color-background)]/80 backdrop-blur-md border-b border-[var(--color-border)]'
-                : 'py-6 bg-transparent'
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${isScrolled
+                ? 'py-4 bg-[var(--color-background)]/80 backdrop-blur-md border-[var(--color-border)]'
+                : 'py-6 bg-transparent border-transparent'
                 }`}
         >
             <nav className="container-custom flex items-center justify-between">
