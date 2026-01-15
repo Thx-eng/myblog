@@ -145,6 +145,23 @@ export default function MusicPlayer() {
         handleProgressInteraction(e.clientX);
     };
 
+    // 鼠标拖动进度条
+    const isDraggingRef = useRef(false);
+
+    const handleProgressMouseDown = useCallback((e) => {
+        isDraggingRef.current = true;
+        handleProgressInteraction(e.clientX);
+    }, []);
+
+    const handleProgressMouseMove = useCallback((e) => {
+        if (!isDraggingRef.current) return;
+        handleProgressInteraction(e.clientX);
+    }, []);
+
+    const handleProgressMouseUp = useCallback(() => {
+        isDraggingRef.current = false;
+    }, []);
+
     // 触摸滑动进度条
     const handleProgressTouch = useCallback((e) => {
         const touch = e.touches[0];
@@ -155,6 +172,20 @@ export default function MusicPlayer() {
         const touch = e.touches[0];
         handleProgressInteraction(touch.clientX);
     }, [duration]);
+
+    // 为进度条添加鼠标拖动事件
+    useEffect(() => {
+        const handleMouseMove = (e) => handleProgressMouseMove(e);
+        const handleMouseUp = () => handleProgressMouseUp();
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [handleProgressMouseMove, handleProgressMouseUp]);
 
     // 为进度条添加触摸事件（使用 passive: false 避免报错）
     useEffect(() => {
@@ -317,7 +348,8 @@ export default function MusicPlayer() {
                                 <div
                                     ref={progressRef}
                                     onClick={handleProgressClick}
-                                    className="relative h-3 md:h-1.5 bg-[var(--color-border)] rounded-full cursor-pointer group touch-none"
+                                    onMouseDown={handleProgressMouseDown}
+                                    className="relative h-3 md:h-1.5 bg-[var(--color-border)] rounded-full cursor-pointer group"
                                 >
                                     <motion.div
                                         className="absolute left-0 top-0 h-full bg-[var(--color-accent)] rounded-full"
