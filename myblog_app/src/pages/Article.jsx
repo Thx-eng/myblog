@@ -151,6 +151,8 @@ export default function Article() {
           font-size: 2rem;
           margin-top: 2.5rem;
           margin-bottom: 1rem;
+          padding-bottom: 0.5rem;
+          border-bottom: 1px solid var(--color-border);
           color: var(--color-primary);
         }
         
@@ -159,6 +161,8 @@ export default function Article() {
           font-size: 1.5rem;
           margin-top: 2.5rem;
           margin-bottom: 1rem;
+          padding-bottom: 0.4rem;
+          border-bottom: 1px solid var(--color-border);
           color: var(--color-primary);
         }
         
