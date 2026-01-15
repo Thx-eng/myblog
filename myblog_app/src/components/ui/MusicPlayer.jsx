@@ -143,15 +143,12 @@ export default function MusicPlayer() {
         }
     }, []);
 
-    const handleProgressClick = (e) => {
-        handleProgressInteraction(e.clientX);
-    };
-
-    // 鼠标拖动进度条
+    // 鼠标拖动进度条（点击也视为一次拖动）
     const isDraggingRef = useRef(false);
     const wasPlayingRef = useRef(false); // 记录拖动前是否在播放
 
     const handleProgressMouseDown = useCallback((e) => {
+        e.preventDefault(); // 防止选中文字
         isDraggingRef.current = true;
         // 拖动开始时暂停播放，避免炸音
         if (audioRef.current && !audioRef.current.paused) {
@@ -174,36 +171,7 @@ export default function MusicPlayer() {
         // 拖动结束后恢复播放
         if (wasPlayingRef.current && audioRef.current) {
             audioRef.current.play().catch(console.error);
-        }
-    }, []);
-
-    // 触摸滑动进度条
-    const isTouchingRef = useRef(false);
-
-    const handleProgressTouch = useCallback((e) => {
-        isTouchingRef.current = true;
-        // 触摸开始时暂停播放
-        if (audioRef.current && !audioRef.current.paused) {
-            wasPlayingRef.current = true;
-            audioRef.current.pause();
-        } else {
             wasPlayingRef.current = false;
-        }
-        const touch = e.touches[0];
-        handleProgressInteraction(touch.clientX);
-    }, [handleProgressInteraction]);
-
-    const handleProgressTouchMove = useCallback((e) => {
-        const touch = e.touches[0];
-        handleProgressInteraction(touch.clientX);
-    }, [handleProgressInteraction]);
-
-    const handleProgressTouchEnd = useCallback(() => {
-        if (!isTouchingRef.current) return;
-        isTouchingRef.current = false;
-        // 触摸结束后恢复播放
-        if (wasPlayingRef.current && audioRef.current) {
-            audioRef.current.play().catch(console.error);
         }
     }, []);
 
@@ -220,23 +188,6 @@ export default function MusicPlayer() {
             document.removeEventListener('mouseup', handleMouseUp);
         };
     }, [handleProgressMouseMove, handleProgressMouseUp]);
-
-    // 为进度条添加触摸事件（使用 passive: false 避免报错）
-    useEffect(() => {
-        const progressEl = progressRef.current;
-        if (!progressEl) return;
-
-        const options = { passive: true };
-        progressEl.addEventListener('touchstart', handleProgressTouch, options);
-        progressEl.addEventListener('touchmove', handleProgressTouchMove, options);
-        progressEl.addEventListener('touchend', handleProgressTouchEnd, options);
-
-        return () => {
-            progressEl.removeEventListener('touchstart', handleProgressTouch, options);
-            progressEl.removeEventListener('touchmove', handleProgressTouchMove, options);
-            progressEl.removeEventListener('touchend', handleProgressTouchEnd, options);
-        };
-    }, [handleProgressTouch, handleProgressTouchMove, handleProgressTouchEnd]);
 
     // 检测移动端
     useEffect(() => {
@@ -383,9 +334,31 @@ export default function MusicPlayer() {
                             <div className="px-4 pb-2">
                                 <div
                                     ref={progressRef}
-                                    onClick={handleProgressClick}
                                     onMouseDown={handleProgressMouseDown}
+                                    onTouchStart={(e) => {
+                                        // 触摸开始时暂停播放
+                                        if (audioRef.current && !audioRef.current.paused) {
+                                            wasPlayingRef.current = true;
+                                            audioRef.current.pause();
+                                        } else {
+                                            wasPlayingRef.current = false;
+                                        }
+                                        const touch = e.touches[0];
+                                        handleProgressInteraction(touch.clientX);
+                                    }}
+                                    onTouchMove={(e) => {
+                                        const touch = e.touches[0];
+                                        handleProgressInteraction(touch.clientX);
+                                    }}
+                                    onTouchEnd={() => {
+                                        // 触摸结束后恢复播放
+                                        if (wasPlayingRef.current && audioRef.current) {
+                                            audioRef.current.play().catch(console.error);
+                                            wasPlayingRef.current = false;
+                                        }
+                                    }}
                                     className="relative h-3 md:h-1.5 bg-[var(--color-border)] rounded-full cursor-pointer group"
+                                    style={{ touchAction: 'none' }}
                                 >
                                     <motion.div
                                         className="absolute left-0 top-0 h-full bg-[var(--color-accent)] rounded-full"
