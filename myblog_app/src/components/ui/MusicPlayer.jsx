@@ -209,22 +209,33 @@ export default function MusicPlayer() {
         if (!audio) return;
 
         const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-        const handleLoadedMetadata = () => setDuration(audio.duration);
+        const handleDurationChange = () => {
+            if (Number.isFinite(audio.duration) && audio.duration > 0) {
+                setDuration(audio.duration);
+            }
+        };
         const handleEnded = () => changeSong(1, true); // 自动播放下一首
         const handlePlay = () => setIsPlaying(true);
         const handlePause = () => setIsPlaying(false);
 
         audio.addEventListener('timeupdate', handleTimeUpdate);
-        audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+        audio.addEventListener('loadedmetadata', handleDurationChange);
+        audio.addEventListener('durationchange', handleDurationChange);
         audio.addEventListener('ended', handleEnded);
         audio.addEventListener('play', handlePlay);
         audio.addEventListener('pause', handlePause);
 
         audio.volume = volume;
 
+        // 初始化检查：如果已经有 duration，立即更新
+        if (Number.isFinite(audio.duration) && audio.duration > 0) {
+            setDuration(audio.duration);
+        }
+
         return () => {
             audio.removeEventListener('timeupdate', handleTimeUpdate);
-            audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+            audio.removeEventListener('loadedmetadata', handleDurationChange);
+            audio.removeEventListener('durationchange', handleDurationChange);
             audio.removeEventListener('ended', handleEnded);
             audio.removeEventListener('play', handlePlay);
             audio.removeEventListener('pause', handlePause);
