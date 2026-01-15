@@ -275,12 +275,13 @@ export default function MusicPlayer() {
                             {/* 标题栏 */}
                             <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
                                 <div className="flex items-center gap-2 text-[var(--color-primary)]">
-                                    <motion.div
-                                        animate={{ rotate: isPlaying ? 360 : 0 }}
-                                        transition={{ duration: 3, repeat: isPlaying ? Infinity : 0, ease: 'linear' }}
+                                    <div
+                                        style={{
+                                            animation: isPlaying ? 'spin 3s linear infinite' : 'none'
+                                        }}
                                     >
                                         <MusicNoteIcon />
-                                    </motion.div>
+                                    </div>
                                     <span className="text-sm font-medium">音乐播放器</span>
                                 </div>
                                 <div className="flex items-center gap-1">
@@ -406,13 +407,14 @@ export default function MusicPlayer() {
                             className="fixed bottom-24 right-2 md:right-6 z-50 w-14 h-14 rounded-full bg-[var(--color-surface)]/95 backdrop-blur-md border border-[var(--color-border)] flex items-center justify-center shadow-lg hover:border-[var(--color-accent)] transition-colors group"
                             title="展开播放器"
                         >
-                            <motion.div
-                                animate={{ rotate: isPlaying ? 360 : 0 }}
-                                transition={{ duration: 3, repeat: isPlaying ? Infinity : 0, ease: 'linear' }}
+                            <div
+                                style={{
+                                    animation: isPlaying ? 'spin 3s linear infinite' : 'none'
+                                }}
                                 className="text-[var(--color-accent)]"
                             >
                                 <MusicNoteIcon />
-                            </motion.div>
+                            </div>
                             {isPlaying && !isDocked && (
                                 <motion.div
                                     className="absolute inset-0 rounded-full border-2 border-[var(--color-accent)]"

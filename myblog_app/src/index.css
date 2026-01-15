@@ -183,6 +183,15 @@ a {
   }
 }
 
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* 滚动显示动画类 */
 .reveal {
   opacity: 0;
