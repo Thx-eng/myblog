@@ -176,10 +176,18 @@ export default function Article() {
           color: var(--color-secondary);
         }
         
-        .prose ul, .prose ol {
+        .prose ul {
           margin-bottom: 1.5rem;
           padding-left: 1.5rem;
           color: var(--color-secondary);
+          list-style-type: disc;
+        }
+        
+        .prose ol {
+          margin-bottom: 1.5rem;
+          padding-left: 1.5rem;
+          color: var(--color-secondary);
+          list-style-type: decimal;
         }
         
         .prose li {
@@ -247,6 +255,59 @@ export default function Article() {
         .prose th {
           background: var(--color-surface);
           font-weight: 600;
+        }
+        
+        .prose h4 {
+          font-family: var(--font-heading);
+          font-size: 1.1rem;
+          margin-top: 1.75rem;
+          margin-bottom: 0.5rem;
+          color: var(--color-primary);
+        }
+        
+        .prose h5 {
+          font-family: var(--font-heading);
+          font-size: 1rem;
+          margin-top: 1.5rem;
+          margin-bottom: 0.5rem;
+          color: var(--color-primary);
+        }
+        
+        .prose h6 {
+          font-family: var(--font-heading);
+          font-size: 0.9rem;
+          margin-top: 1.25rem;
+          margin-bottom: 0.5rem;
+          color: var(--color-muted);
+        }
+        
+        .prose strong {
+          font-weight: 600;
+          color: var(--color-primary);
+        }
+        
+        .prose em {
+          font-style: italic;
+          color: var(--color-muted);
+        }
+        
+        .prose hr {
+          border: none;
+          border-top: 1px solid var(--color-border);
+          margin: 2rem 0;
+        }
+        
+        .prose ul ul, .prose ol ol, .prose ul ol, .prose ol ul {
+          margin-top: 0.5rem;
+          margin-bottom: 0.5rem;
+        }
+        
+        .prose ul ul {
+          list-style-type: circle;
+        }
+        
+        .prose ul ul ul {
+          list-style-type: square;
         }
       `}</style>
         </article>
