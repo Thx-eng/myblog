@@ -79,12 +79,14 @@ export default function MusicPlayer() {
 
     const [isExpanded, setIsExpanded] = useState(false);
     const [isVisible, setIsVisible] = useState(true);
+    const [isDocked, setIsDocked] = useState(false); // 移动端边缘收缩模式
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
     const [volume, setVolume] = useState(0.7);
     const [isMuted, setIsMuted] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
     const currentSong = playlist[currentIndex] || { title: '无歌曲', artist: '', src: '' };
 
@@ -105,10 +107,11 @@ export default function MusicPlayer() {
         let newIndex = currentIndex + direction;
         if (newIndex < 0) newIndex = playlist.length - 1;
         if (newIndex >= playlist.length) newIndex = 0;
-        shouldAutoPlayRef.current = autoPlay;
+        // 如果指定自动播放，或者当前正在播放，切换后继续播放
+        shouldAutoPlayRef.current = autoPlay || isPlaying;
         setCurrentIndex(newIndex);
         setCurrentTime(0);
-    }, [currentIndex]);
+    }, [currentIndex, isPlaying]);
 
     // 音量控制
     const handleVolumeChange = (e) => {
@@ -127,16 +130,65 @@ export default function MusicPlayer() {
         }
     };
 
-    // 进度条拖动
-    const handleProgressClick = (e) => {
+    // 进度条点击/触摸
+    const handleProgressInteraction = (clientX) => {
         const rect = progressRef.current.getBoundingClientRect();
-        const percent = (e.clientX - rect.left) / rect.width;
+        const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
         const newTime = percent * duration;
         if (audioRef.current) {
             audioRef.current.currentTime = newTime;
             setCurrentTime(newTime);
         }
     };
+
+    const handleProgressClick = (e) => {
+        handleProgressInteraction(e.clientX);
+    };
+
+    // 触摸滑动进度条
+    const handleProgressTouch = useCallback((e) => {
+        const touch = e.touches[0];
+        handleProgressInteraction(touch.clientX);
+    }, [duration]);
+
+    const handleProgressTouchMove = useCallback((e) => {
+        const touch = e.touches[0];
+        handleProgressInteraction(touch.clientX);
+    }, [duration]);
+
+    // 为进度条添加触摸事件（使用 passive: false 避免报错）
+    useEffect(() => {
+        const progressEl = progressRef.current;
+        if (!progressEl) return;
+
+        const options = { passive: true };
+        progressEl.addEventListener('touchstart', handleProgressTouch, options);
+        progressEl.addEventListener('touchmove', handleProgressTouchMove, options);
+
+        return () => {
+            progressEl.removeEventListener('touchstart', handleProgressTouch, options);
+            progressEl.removeEventListener('touchmove', handleProgressTouchMove, options);
+        };
+    }, [handleProgressTouch, handleProgressTouchMove]);
+
+    // 检测移动端
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768 || 'ontouchstart' in window);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // 移动端自动收缩到边缘（几秒后）
+    useEffect(() => {
+        if (!isMobile || !isVisible || isExpanded) return;
+        const timer = setTimeout(() => {
+            setIsDocked(true);
+        }, 5000);
+        return () => clearTimeout(timer);
+    }, [isMobile, isVisible, isExpanded, isPlaying]);
 
     // 音频事件处理
     useEffect(() => {
@@ -264,15 +316,15 @@ export default function MusicPlayer() {
                                 <div
                                     ref={progressRef}
                                     onClick={handleProgressClick}
-                                    className="relative h-1.5 bg-[var(--color-border)] rounded-full cursor-pointer group"
+                                    className="relative h-3 md:h-1.5 bg-[var(--color-border)] rounded-full cursor-pointer group touch-none"
                                 >
                                     <motion.div
                                         className="absolute left-0 top-0 h-full bg-[var(--color-accent)] rounded-full"
                                         style={{ width: `${progress}%` }}
                                     />
                                     <motion.div
-                                        className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-[var(--color-accent)] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                        style={{ left: `calc(${progress}% - 6px)` }}
+                                        className="absolute top-1/2 -translate-y-1/2 w-4 h-4 md:w-3 md:h-3 bg-[var(--color-accent)] rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                                        style={{ left: `calc(${progress}% - 8px)` }}
                                     />
                                 </div>
                                 <div className="flex justify-between mt-1 text-xs text-[var(--color-muted)]">
@@ -335,16 +387,23 @@ export default function MusicPlayer() {
                             </div>
                         </motion.div>
                     ) : (
-                        // 迷你模式
+                        // 迷你模式 / 边缘收缩模式
                         <motion.button
                             key="mini"
-                            initial={{ opacity: 0, scale: 0 }}
-                            animate={{ opacity: 1, scale: 1 }}
+                            initial={{ opacity: 0, scale: 0, x: 0 }}
+                            animate={{
+                                opacity: isDocked ? 0.4 : 1,
+                                scale: isDocked ? 0.7 : 1,
+                                x: isDocked ? 20 : 0
+                            }}
                             exit={{ opacity: 0, scale: 0 }}
-                            whileHover={{ scale: 1.1 }}
+                            whileHover={{ opacity: 1, scale: 1.1, x: 0 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => setIsExpanded(true)}
-                            className="fixed bottom-24 right-6 z-50 w-14 h-14 rounded-full bg-[var(--color-surface)]/95 backdrop-blur-md border border-[var(--color-border)] flex items-center justify-center shadow-lg hover:border-[var(--color-accent)] transition-colors group"
+                            onClick={() => {
+                                setIsDocked(false);
+                                setIsExpanded(true);
+                            }}
+                            className="fixed bottom-24 right-2 md:right-6 z-50 w-14 h-14 rounded-full bg-[var(--color-surface)]/95 backdrop-blur-md border border-[var(--color-border)] flex items-center justify-center shadow-lg hover:border-[var(--color-accent)] transition-colors group"
                             title="展开播放器"
                         >
                             <motion.div
@@ -354,7 +413,7 @@ export default function MusicPlayer() {
                             >
                                 <MusicNoteIcon />
                             </motion.div>
-                            {isPlaying && (
+                            {isPlaying && !isDocked && (
                                 <motion.div
                                     className="absolute inset-0 rounded-full border-2 border-[var(--color-accent)]"
                                     initial={{ scale: 1, opacity: 0.8 }}
