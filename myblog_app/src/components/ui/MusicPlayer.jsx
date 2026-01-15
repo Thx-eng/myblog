@@ -87,7 +87,6 @@ export default function MusicPlayer() {
     const [volume, setVolume] = useState(0.7);
     const [isMuted, setIsMuted] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
-    const [isAudioReady, setIsAudioReady] = useState(false); // 音频元数据是否加载完成
 
     const currentSong = playlist[currentIndex] || { title: '无歌曲', artist: '', src: '' };
 
@@ -153,11 +152,16 @@ export default function MusicPlayer() {
         const handleMouseMove = (e) => {
             if (!isDraggingRef.current) return;
             const rect = progressRef.current?.getBoundingClientRect();
-            if (rect && audioRef.current?.duration) {
+            const audioDuration = audioRef.current?.duration;
+            if (rect && Number.isFinite(audioDuration) && audioDuration > 0) {
                 const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                const newTime = percent * audioRef.current.duration;
+                const newTime = percent * audioDuration;
                 audioRef.current.currentTime = newTime;
                 setCurrentTime(newTime);
+                // 强制更新 duration 状态
+                if (duration !== audioDuration) {
+                    setDuration(audioDuration);
+                }
             }
         };
 
@@ -205,10 +209,7 @@ export default function MusicPlayer() {
         if (!audio) return;
 
         const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-        const handleLoadedMetadata = () => {
-            setDuration(audio.duration);
-            setIsAudioReady(true);
-        };
+        const handleLoadedMetadata = () => setDuration(audio.duration);
         const handleEnded = () => changeSong(1, true); // 自动播放下一首
         const handlePlay = () => setIsPlaying(true);
         const handlePause = () => setIsPlaying(false);
@@ -235,7 +236,6 @@ export default function MusicPlayer() {
         const audio = audioRef.current;
         if (!audio || !currentSong.src) return;
 
-        setIsAudioReady(false); // 切换歌曲时重置加载状态
         audio.load();
         // 如果设置了自动播放标志，则播放
         if (shouldAutoPlayRef.current) {
@@ -331,12 +331,9 @@ export default function MusicPlayer() {
                                     ref={progressRef}
                                     onMouseDown={(e) => {
                                         e.preventDefault();
-                                        // 如果音频未准备好，不执行任何操作
-                                        if (!audioRef.current || !audioRef.current.duration) return;
-
                                         isDraggingRef.current = true;
                                         // 暂停播放避免炸音
-                                        if (!audioRef.current.paused) {
+                                        if (audioRef.current && !audioRef.current.paused) {
                                             wasPlayingRef.current = true;
                                             audioRef.current.pause();
                                         } else {
@@ -344,19 +341,21 @@ export default function MusicPlayer() {
                                         }
                                         // 计算并设置新时间
                                         const rect = progressRef.current?.getBoundingClientRect();
-                                        if (rect) {
+                                        const audioDuration = audioRef.current?.duration;
+                                        if (rect && Number.isFinite(audioDuration) && audioDuration > 0) {
                                             const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                                            const newTime = percent * audioRef.current.duration;
+                                            const newTime = percent * audioDuration;
                                             audioRef.current.currentTime = newTime;
                                             setCurrentTime(newTime);
+                                            // 强制更新 duration 状态，防止初始加载时为 0 导致进度条显示错误
+                                            if (duration !== audioDuration) {
+                                                setDuration(audioDuration);
+                                            }
                                         }
                                     }}
                                     onTouchStart={(e) => {
-                                        // 如果音频未准备好，不执行任何操作
-                                        if (!audioRef.current || !audioRef.current.duration) return;
-
                                         // 触摸开始时暂停播放
-                                        if (!audioRef.current.paused) {
+                                        if (audioRef.current && !audioRef.current.paused) {
                                             wasPlayingRef.current = true;
                                             audioRef.current.pause();
                                         } else {
@@ -365,21 +364,31 @@ export default function MusicPlayer() {
                                         // 计算并设置新时间
                                         const touch = e.touches[0];
                                         const rect = progressRef.current?.getBoundingClientRect();
-                                        if (rect) {
+                                        const audioDuration = audioRef.current?.duration;
+                                        if (rect && Number.isFinite(audioDuration) && audioDuration > 0) {
                                             const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
-                                            const newTime = percent * audioRef.current.duration;
+                                            const newTime = percent * audioDuration;
                                             audioRef.current.currentTime = newTime;
                                             setCurrentTime(newTime);
+                                            // 强制更新 duration 状态
+                                            if (duration !== audioDuration) {
+                                                setDuration(audioDuration);
+                                            }
                                         }
                                     }}
                                     onTouchMove={(e) => {
                                         const touch = e.touches[0];
                                         const rect = progressRef.current?.getBoundingClientRect();
-                                        if (rect && audioRef.current?.duration) {
+                                        const audioDuration = audioRef.current?.duration;
+                                        if (rect && Number.isFinite(audioDuration) && audioDuration > 0) {
                                             const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
-                                            const newTime = percent * audioRef.current.duration;
+                                            const newTime = percent * audioDuration;
                                             audioRef.current.currentTime = newTime;
                                             setCurrentTime(newTime);
+                                            // 强制更新 duration 状态
+                                            if (duration !== audioDuration) {
+                                                setDuration(audioDuration);
+                                            }
                                         }
                                     }}
                                     onTouchEnd={() => {
@@ -389,19 +398,17 @@ export default function MusicPlayer() {
                                             wasPlayingRef.current = false;
                                         }
                                     }}
-                                    className={`relative h-3 md:h-1.5 rounded-full group ${isAudioReady ? 'bg-[var(--color-border)] cursor-pointer' : 'bg-[var(--color-border)]/50 cursor-not-allowed'}`}
+                                    className="relative h-3 md:h-1.5 bg-[var(--color-border)] rounded-full cursor-pointer group"
                                     style={{ touchAction: 'none' }}
                                 >
                                     <motion.div
                                         className="absolute left-0 top-0 h-full bg-[var(--color-accent)] rounded-full"
                                         style={{ width: `${progress}%` }}
                                     />
-                                    {isAudioReady && (
-                                        <motion.div
-                                            className="absolute top-1/2 -translate-y-1/2 w-4 h-4 md:w-3 md:h-3 bg-[var(--color-accent)] rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-                                            style={{ left: `calc(${progress}% - 8px)` }}
-                                        />
-                                    )}
+                                    <motion.div
+                                        className="absolute top-1/2 -translate-y-1/2 w-4 h-4 md:w-3 md:h-3 bg-[var(--color-accent)] rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                                        style={{ left: `calc(${progress}% - 8px)` }}
+                                    />
                                 </div>
                                 <div className="flex justify-between mt-1 text-xs text-[var(--color-muted)]">
                                     <span>{formatTime(currentTime)}</span>
