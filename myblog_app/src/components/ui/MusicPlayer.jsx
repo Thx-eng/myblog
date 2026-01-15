@@ -131,15 +131,17 @@ export default function MusicPlayer() {
     };
 
     // 进度条点击/触摸
-    const handleProgressInteraction = (clientX) => {
-        const rect = progressRef.current.getBoundingClientRect();
+    const handleProgressInteraction = useCallback((clientX) => {
+        const rect = progressRef.current?.getBoundingClientRect();
+        if (!rect) return;
         const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-        const newTime = percent * duration;
-        if (audioRef.current) {
+        const audioDuration = audioRef.current?.duration || 0;
+        const newTime = percent * audioDuration;
+        if (audioRef.current && audioDuration > 0) {
             audioRef.current.currentTime = newTime;
             setCurrentTime(newTime);
         }
-    };
+    }, []);
 
     const handleProgressClick = (e) => {
         handleProgressInteraction(e.clientX);
@@ -151,12 +153,12 @@ export default function MusicPlayer() {
     const handleProgressMouseDown = useCallback((e) => {
         isDraggingRef.current = true;
         handleProgressInteraction(e.clientX);
-    }, []);
+    }, [handleProgressInteraction]);
 
     const handleProgressMouseMove = useCallback((e) => {
         if (!isDraggingRef.current) return;
         handleProgressInteraction(e.clientX);
-    }, []);
+    }, [handleProgressInteraction]);
 
     const handleProgressMouseUp = useCallback(() => {
         isDraggingRef.current = false;
@@ -166,12 +168,12 @@ export default function MusicPlayer() {
     const handleProgressTouch = useCallback((e) => {
         const touch = e.touches[0];
         handleProgressInteraction(touch.clientX);
-    }, [duration]);
+    }, [handleProgressInteraction]);
 
     const handleProgressTouchMove = useCallback((e) => {
         const touch = e.touches[0];
         handleProgressInteraction(touch.clientX);
-    }, [duration]);
+    }, [handleProgressInteraction]);
 
     // 为进度条添加鼠标拖动事件
     useEffect(() => {
