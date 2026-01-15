@@ -143,42 +143,32 @@ export default function MusicPlayer() {
         }
     }, []);
 
-    // 鼠标拖动进度条（点击也视为一次拖动）
+    // 鼠标拖动进度条
     const isDraggingRef = useRef(false);
     const wasPlayingRef = useRef(false); // 记录拖动前是否在播放
 
-    const handleProgressMouseDown = useCallback((e) => {
-        e.preventDefault(); // 防止选中文字
-        isDraggingRef.current = true;
-        // 拖动开始时暂停播放，避免炸音
-        if (audioRef.current && !audioRef.current.paused) {
-            wasPlayingRef.current = true;
-            audioRef.current.pause();
-        } else {
-            wasPlayingRef.current = false;
-        }
-        handleProgressInteraction(e.clientX);
-    }, [handleProgressInteraction]);
-
-    const handleProgressMouseMove = useCallback((e) => {
-        if (!isDraggingRef.current) return;
-        handleProgressInteraction(e.clientX);
-    }, [handleProgressInteraction]);
-
-    const handleProgressMouseUp = useCallback(() => {
-        if (!isDraggingRef.current) return;
-        isDraggingRef.current = false;
-        // 拖动结束后恢复播放
-        if (wasPlayingRef.current && audioRef.current) {
-            audioRef.current.play().catch(console.error);
-            wasPlayingRef.current = false;
-        }
-    }, []);
-
     // 为进度条添加鼠标拖动事件
     useEffect(() => {
-        const handleMouseMove = (e) => handleProgressMouseMove(e);
-        const handleMouseUp = () => handleProgressMouseUp();
+        const handleMouseMove = (e) => {
+            if (!isDraggingRef.current) return;
+            const rect = progressRef.current?.getBoundingClientRect();
+            if (rect && audioRef.current?.duration) {
+                const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                const newTime = percent * audioRef.current.duration;
+                audioRef.current.currentTime = newTime;
+                setCurrentTime(newTime);
+            }
+        };
+
+        const handleMouseUp = () => {
+            if (!isDraggingRef.current) return;
+            isDraggingRef.current = false;
+            // 拖动结束后恢复播放
+            if (wasPlayingRef.current && audioRef.current) {
+                audioRef.current.play().catch(console.error);
+                wasPlayingRef.current = false;
+            }
+        };
 
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
@@ -187,7 +177,7 @@ export default function MusicPlayer() {
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [handleProgressMouseMove, handleProgressMouseUp]);
+    }, []);
 
     // 检测移动端
     useEffect(() => {
@@ -334,7 +324,25 @@ export default function MusicPlayer() {
                             <div className="px-4 pb-2">
                                 <div
                                     ref={progressRef}
-                                    onMouseDown={handleProgressMouseDown}
+                                    onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        isDraggingRef.current = true;
+                                        // 暂停播放避免炸音
+                                        if (audioRef.current && !audioRef.current.paused) {
+                                            wasPlayingRef.current = true;
+                                            audioRef.current.pause();
+                                        } else {
+                                            wasPlayingRef.current = false;
+                                        }
+                                        // 计算并设置新时间
+                                        const rect = progressRef.current?.getBoundingClientRect();
+                                        if (rect && audioRef.current?.duration) {
+                                            const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                                            const newTime = percent * audioRef.current.duration;
+                                            audioRef.current.currentTime = newTime;
+                                            setCurrentTime(newTime);
+                                        }
+                                    }}
                                     onTouchStart={(e) => {
                                         // 触摸开始时暂停播放
                                         if (audioRef.current && !audioRef.current.paused) {
@@ -343,12 +351,25 @@ export default function MusicPlayer() {
                                         } else {
                                             wasPlayingRef.current = false;
                                         }
+                                        // 计算并设置新时间
                                         const touch = e.touches[0];
-                                        handleProgressInteraction(touch.clientX);
+                                        const rect = progressRef.current?.getBoundingClientRect();
+                                        if (rect && audioRef.current?.duration) {
+                                            const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+                                            const newTime = percent * audioRef.current.duration;
+                                            audioRef.current.currentTime = newTime;
+                                            setCurrentTime(newTime);
+                                        }
                                     }}
                                     onTouchMove={(e) => {
                                         const touch = e.touches[0];
-                                        handleProgressInteraction(touch.clientX);
+                                        const rect = progressRef.current?.getBoundingClientRect();
+                                        if (rect && audioRef.current?.duration) {
+                                            const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+                                            const newTime = percent * audioRef.current.duration;
+                                            audioRef.current.currentTime = newTime;
+                                            setCurrentTime(newTime);
+                                        }
                                     }}
                                     onTouchEnd={() => {
                                         // 触摸结束后恢复播放
