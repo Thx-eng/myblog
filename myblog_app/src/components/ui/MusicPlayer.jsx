@@ -75,6 +75,7 @@ const formatTime = (seconds) => {
 export default function MusicPlayer() {
     const audioRef = useRef(null);
     const progressRef = useRef(null);
+    const shouldAutoPlayRef = useRef(false); // 跟踪是否应该自动播放
 
     const [isExpanded, setIsExpanded] = useState(false);
     const [isVisible, setIsVisible] = useState(true);
@@ -100,10 +101,11 @@ export default function MusicPlayer() {
     }, [isPlaying, currentSong.src]);
 
     // 切换歌曲
-    const changeSong = useCallback((direction) => {
+    const changeSong = useCallback((direction, autoPlay = false) => {
         let newIndex = currentIndex + direction;
         if (newIndex < 0) newIndex = playlist.length - 1;
         if (newIndex >= playlist.length) newIndex = 0;
+        shouldAutoPlayRef.current = autoPlay;
         setCurrentIndex(newIndex);
         setCurrentTime(0);
     }, [currentIndex]);
@@ -143,7 +145,7 @@ export default function MusicPlayer() {
 
         const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
         const handleLoadedMetadata = () => setDuration(audio.duration);
-        const handleEnded = () => changeSong(1);
+        const handleEnded = () => changeSong(1, true); // 自动播放下一首
         const handlePlay = () => setIsPlaying(true);
         const handlePause = () => setIsPlaying(false);
 
@@ -170,146 +172,157 @@ export default function MusicPlayer() {
         if (!audio || !currentSong.src) return;
 
         audio.load();
-        if (isPlaying) {
+        // 如果设置了自动播放标志，则播放
+        if (shouldAutoPlayRef.current) {
             audio.play().catch(console.error);
+            shouldAutoPlayRef.current = false;
         }
     }, [currentIndex, currentSong.src]);
 
-    // 如果隐藏则不渲染
-    if (!isVisible) {
-        return (
-            <motion.button
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                onClick={() => setIsVisible(true)}
-                className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center shadow-lg hover:border-[var(--color-accent)] transition-colors"
-                title="打开音乐播放器"
-            >
-                <MusicNoteIcon />
-            </motion.button>
-        );
-    }
+    // 关闭播放器（暂停并隐藏）
+    const handleClose = useCallback(() => {
+        const audio = audioRef.current;
+        if (audio && !audio.paused) {
+            audio.pause();
+        }
+        setIsVisible(false);
+    }, []);
 
     const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
     return (
         <>
+            {/* audio 元素始终保持挂载 */}
             <audio ref={audioRef} src={currentSong.src} preload="metadata" />
 
-            <AnimatePresence mode="wait">
-                {isExpanded ? (
-                    // 展开模式
-                    <motion.div
-                        key="expanded"
-                        initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.8, y: 20 }}
-                        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                        className="fixed bottom-6 right-6 z-50 w-72 bg-[var(--color-surface)]/95 backdrop-blur-md border border-[var(--color-border)] rounded-2xl shadow-2xl overflow-hidden"
-                    >
-                        {/* 标题栏 */}
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
-                            <div className="flex items-center gap-2 text-[var(--color-primary)]">
-                                <motion.div
-                                    animate={{ rotate: isPlaying ? 360 : 0 }}
-                                    transition={{ duration: 3, repeat: isPlaying ? Infinity : 0, ease: 'linear' }}
-                                >
-                                    <MusicNoteIcon />
-                                </motion.div>
-                                <span className="text-sm font-medium">音乐播放器</span>
+            {/* 隐藏时只显示小按钮 */}
+            {!isVisible && (
+                <motion.button
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    onClick={() => setIsVisible(true)}
+                    className="fixed bottom-24 right-6 z-50 w-12 h-12 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center shadow-lg hover:border-[var(--color-accent)] transition-colors"
+                    title="打开音乐播放器"
+                >
+                    <MusicNoteIcon />
+                </motion.button>
+            )}
+
+            {isVisible && (
+                <AnimatePresence mode="wait">
+                    {isExpanded ? (
+                        // 展开模式
+                        <motion.div
+                            key="expanded"
+                            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                            className="fixed bottom-24 right-6 z-50 w-72 bg-[var(--color-surface)]/95 backdrop-blur-md border border-[var(--color-border)] rounded-2xl shadow-2xl overflow-hidden"
+                        >
+                            {/* 标题栏 */}
+                            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
+                                <div className="flex items-center gap-2 text-[var(--color-primary)]">
+                                    <motion.div
+                                        animate={{ rotate: isPlaying ? 360 : 0 }}
+                                        transition={{ duration: 3, repeat: isPlaying ? Infinity : 0, ease: 'linear' }}
+                                    >
+                                        <MusicNoteIcon />
+                                    </motion.div>
+                                    <span className="text-sm font-medium">音乐播放器</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={() => setIsExpanded(false)}
+                                        className="p-1.5 rounded-md hover:bg-[var(--color-border)] transition-colors text-[var(--color-muted)]"
+                                        title="收起"
+                                    >
+                                        <MinimizeIcon />
+                                    </button>
+                                    <button
+                                        onClick={handleClose}
+                                        className="p-1.5 rounded-md hover:bg-[var(--color-border)] transition-colors text-[var(--color-muted)]"
+                                        title="关闭"
+                                    >
+                                        <CloseIcon />
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                                <button
-                                    onClick={() => setIsExpanded(false)}
-                                    className="p-1.5 rounded-md hover:bg-[var(--color-border)] transition-colors text-[var(--color-muted)]"
-                                    title="收起"
+
+                            {/* 歌曲信息 */}
+                            <div className="px-4 py-3">
+                                <h4 className="text-sm font-medium text-[var(--color-primary)] truncate">
+                                    {currentSong.title}
+                                </h4>
+                                <p className="text-xs text-[var(--color-muted)] truncate">
+                                    {currentSong.artist}
+                                </p>
+                            </div>
+
+                            {/* 进度条 */}
+                            <div className="px-4 pb-2">
+                                <div
+                                    ref={progressRef}
+                                    onClick={handleProgressClick}
+                                    className="relative h-1.5 bg-[var(--color-border)] rounded-full cursor-pointer group"
                                 >
-                                    <MinimizeIcon />
+                                    <motion.div
+                                        className="absolute left-0 top-0 h-full bg-[var(--color-accent)] rounded-full"
+                                        style={{ width: `${progress}%` }}
+                                    />
+                                    <motion.div
+                                        className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-[var(--color-accent)] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        style={{ left: `calc(${progress}% - 6px)` }}
+                                    />
+                                </div>
+                                <div className="flex justify-between mt-1 text-xs text-[var(--color-muted)]">
+                                    <span>{formatTime(currentTime)}</span>
+                                    <span>{formatTime(duration)}</span>
+                                </div>
+                            </div>
+
+                            {/* 播放控制 */}
+                            <div className="flex items-center justify-center gap-4 py-3">
+                                <button
+                                    onClick={() => changeSong(-1)}
+                                    className="p-2 rounded-full hover:bg-[var(--color-border)] transition-colors text-[var(--color-secondary)] hover:text-[var(--color-primary)]"
+                                    title="上一曲"
+                                >
+                                    <PrevIcon />
                                 </button>
                                 <button
-                                    onClick={() => setIsVisible(false)}
-                                    className="p-1.5 rounded-md hover:bg-[var(--color-border)] transition-colors text-[var(--color-muted)]"
-                                    title="关闭"
+                                    onClick={togglePlay}
+                                    className="p-3 rounded-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-light)] transition-colors shadow-md"
+                                    title={isPlaying ? '暂停' : '播放'}
                                 >
-                                    <CloseIcon />
+                                    {isPlaying ? <PauseIcon /> : <PlayIcon />}
+                                </button>
+                                <button
+                                    onClick={() => changeSong(1)}
+                                    className="p-2 rounded-full hover:bg-[var(--color-border)] transition-colors text-[var(--color-secondary)] hover:text-[var(--color-primary)]"
+                                    title="下一曲"
+                                >
+                                    <NextIcon />
                                 </button>
                             </div>
-                        </div>
 
-                        {/* 歌曲信息 */}
-                        <div className="px-4 py-3">
-                            <h4 className="text-sm font-medium text-[var(--color-primary)] truncate">
-                                {currentSong.title}
-                            </h4>
-                            <p className="text-xs text-[var(--color-muted)] truncate">
-                                {currentSong.artist}
-                            </p>
-                        </div>
-
-                        {/* 进度条 */}
-                        <div className="px-4 pb-2">
-                            <div
-                                ref={progressRef}
-                                onClick={handleProgressClick}
-                                className="relative h-1.5 bg-[var(--color-border)] rounded-full cursor-pointer group"
-                            >
-                                <motion.div
-                                    className="absolute left-0 top-0 h-full bg-[var(--color-accent)] rounded-full"
-                                    style={{ width: `${progress}%` }}
-                                />
-                                <motion.div
-                                    className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-[var(--color-accent)] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                    style={{ left: `calc(${progress}% - 6px)` }}
-                                />
-                            </div>
-                            <div className="flex justify-between mt-1 text-xs text-[var(--color-muted)]">
-                                <span>{formatTime(currentTime)}</span>
-                                <span>{formatTime(duration)}</span>
-                            </div>
-                        </div>
-
-                        {/* 播放控制 */}
-                        <div className="flex items-center justify-center gap-4 py-3">
-                            <button
-                                onClick={() => changeSong(-1)}
-                                className="p-2 rounded-full hover:bg-[var(--color-border)] transition-colors text-[var(--color-secondary)] hover:text-[var(--color-primary)]"
-                                title="上一曲"
-                            >
-                                <PrevIcon />
-                            </button>
-                            <button
-                                onClick={togglePlay}
-                                className="p-3 rounded-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-light)] transition-colors shadow-md"
-                                title={isPlaying ? '暂停' : '播放'}
-                            >
-                                {isPlaying ? <PauseIcon /> : <PlayIcon />}
-                            </button>
-                            <button
-                                onClick={() => changeSong(1)}
-                                className="p-2 rounded-full hover:bg-[var(--color-border)] transition-colors text-[var(--color-secondary)] hover:text-[var(--color-primary)]"
-                                title="下一曲"
-                            >
-                                <NextIcon />
-                            </button>
-                        </div>
-
-                        {/* 音量控制 */}
-                        <div className="flex items-center gap-2 px-4 pb-4">
-                            <button
-                                onClick={toggleMute}
-                                className="p-1 text-[var(--color-muted)] hover:text-[var(--color-primary)] transition-colors"
-                                title={isMuted ? '取消静音' : '静音'}
-                            >
-                                <VolumeIcon muted={isMuted} />
-                            </button>
-                            <input
-                                type="range"
-                                min="0"
-                                max="1"
-                                step="0.01"
-                                value={isMuted ? 0 : volume}
-                                onChange={handleVolumeChange}
-                                className="flex-1 h-1.5 bg-[var(--color-border)] rounded-full appearance-none cursor-pointer
+                            {/* 音量控制 */}
+                            <div className="flex items-center gap-2 px-4 pb-4">
+                                <button
+                                    onClick={toggleMute}
+                                    className="p-1 text-[var(--color-muted)] hover:text-[var(--color-primary)] transition-colors"
+                                    title={isMuted ? '取消静音' : '静音'}
+                                >
+                                    <VolumeIcon muted={isMuted} />
+                                </button>
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="1"
+                                    step="0.01"
+                                    value={isMuted ? 0 : volume}
+                                    onChange={handleVolumeChange}
+                                    className="flex-1 h-1.5 bg-[var(--color-border)] rounded-full appearance-none cursor-pointer
                   [&::-webkit-slider-thumb]:appearance-none
                   [&::-webkit-slider-thumb]:w-3
                   [&::-webkit-slider-thumb]:h-3
@@ -318,40 +331,41 @@ export default function MusicPlayer() {
                   [&::-webkit-slider-thumb]:cursor-pointer
                   [&::-webkit-slider-thumb]:transition-transform
                   [&::-webkit-slider-thumb]:hover:scale-110"
-                            />
-                        </div>
-                    </motion.div>
-                ) : (
-                    // 迷你模式
-                    <motion.button
-                        key="mini"
-                        initial={{ opacity: 0, scale: 0 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0 }}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setIsExpanded(true)}
-                        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[var(--color-surface)]/95 backdrop-blur-md border border-[var(--color-border)] flex items-center justify-center shadow-lg hover:border-[var(--color-accent)] transition-colors group"
-                        title="展开播放器"
-                    >
-                        <motion.div
-                            animate={{ rotate: isPlaying ? 360 : 0 }}
-                            transition={{ duration: 3, repeat: isPlaying ? Infinity : 0, ease: 'linear' }}
-                            className="text-[var(--color-accent)]"
-                        >
-                            <MusicNoteIcon />
+                                />
+                            </div>
                         </motion.div>
-                        {isPlaying && (
+                    ) : (
+                        // 迷你模式
+                        <motion.button
+                            key="mini"
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0 }}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setIsExpanded(true)}
+                            className="fixed bottom-24 right-6 z-50 w-14 h-14 rounded-full bg-[var(--color-surface)]/95 backdrop-blur-md border border-[var(--color-border)] flex items-center justify-center shadow-lg hover:border-[var(--color-accent)] transition-colors group"
+                            title="展开播放器"
+                        >
                             <motion.div
-                                className="absolute inset-0 rounded-full border-2 border-[var(--color-accent)]"
-                                initial={{ scale: 1, opacity: 0.8 }}
-                                animate={{ scale: 1.3, opacity: 0 }}
-                                transition={{ duration: 1.5, repeat: Infinity }}
-                            />
-                        )}
-                    </motion.button>
-                )}
-            </AnimatePresence>
+                                animate={{ rotate: isPlaying ? 360 : 0 }}
+                                transition={{ duration: 3, repeat: isPlaying ? Infinity : 0, ease: 'linear' }}
+                                className="text-[var(--color-accent)]"
+                            >
+                                <MusicNoteIcon />
+                            </motion.div>
+                            {isPlaying && (
+                                <motion.div
+                                    className="absolute inset-0 rounded-full border-2 border-[var(--color-accent)]"
+                                    initial={{ scale: 1, opacity: 0.8 }}
+                                    animate={{ scale: 1.3, opacity: 0 }}
+                                    transition={{ duration: 1.5, repeat: Infinity }}
+                                />
+                            )}
+                        </motion.button>
+                    )}
+                </AnimatePresence>
+            )}
         </>
     );
 }

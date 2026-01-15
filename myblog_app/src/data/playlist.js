@@ -5,13 +5,18 @@
 
 export const playlist = [
     {
-        title: '示例歌曲 1',
-        artist: '未知艺术家',
-        src: '/music/demo1.mp3'
+        title: 'エンディングは突然やってくる',
+        artist: '樋口秀樹 / 柳英一朗 / 西坂恭平',
+        src: '/music/樋口秀樹 柳英一朗 西坂恭平 - エンディングは突然やってくる.mp3'
     },
     {
-        title: '示例歌曲 2',
-        artist: '未知艺术家',
-        src: '/music/demo2.mp3'
+        title: '創作彼女の恋愛公式',
+        artist: '樋口秀樹 / 柳英一朗 / 西坂恭平',
+        src: '/music/樋口秀樹 柳英一朗 西坂恭平 - 創作彼女の恋愛公式.mp3'
+    },
+    {
+        title: '奇跡なんか、いらない。 -piano ver-',
+        artist: '樋口秀樹 / 柳英一朗 / 西坂恭平',
+        src: '/music/樋口秀樹 柳英一朗 西坂恭平 - 奇跡なんか、いらない。 -piano ver-.mp3'
     }
 ];
