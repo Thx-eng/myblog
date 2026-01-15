@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import MagneticButton from '../ui/MagneticButton';
 
 export default function Navbar() {
@@ -74,19 +74,15 @@ export default function Navbar() {
                                         }`}
                                 >
                                     {item.label}
-                                    {/* 活动指示器 */}
-                                    <AnimatePresence>
-                                        {location.pathname === item.path && (
-                                            <motion.span
-                                                layoutId="navIndicator"
-                                                initial={{ scaleX: 0 }}
-                                                animate={{ scaleX: 1 }}
-                                                exit={{ scaleX: 0 }}
-                                                className="absolute -bottom-1 left-0 right-0 h-px bg-[var(--color-accent)]"
-                                                style={{ transformOrigin: 'left' }}
-                                            />
-                                        )}
-                                    </AnimatePresence>
+                                    {/* 活动指示器 - 使用 CSS transition 避免 Framer Motion layoutId 滚动问题 */}
+                                    <span
+                                        className="absolute -bottom-1 left-0 right-0 h-px bg-[var(--color-accent)] transition-all duration-300 ease-out"
+                                        style={{
+                                            transform: location.pathname === item.path ? 'scaleX(1)' : 'scaleX(0)',
+                                            opacity: location.pathname === item.path ? 1 : 0,
+                                            transformOrigin: 'center'
+                                        }}
+                                    />
                                 </Link>
                             </MagneticButton>
                         </li>
