@@ -4,45 +4,70 @@
 
 ## 功能特性
 
+### 核心功能
 - **文章管理** - 创建、编辑、删除文章，支持 Markdown 格式
+- **管理后台** - 密码保护的后台管理界面
 - **数据库** - 使用 Cloudflare D1 (SQLite) 存储数据
-- **架构** - 前后端分离，部署在 Cloudflare 边缘网络
-- **精美设计** - 现代化 UI，支持动画效果和深色模式
-- **响应式布局** - 完美适配移动端和桌面端
+- **分类筛选** - 支持按分类过滤文章列表
+
+### 视觉效果
+- **响应式布局** - 适配移动端和桌面端
+- **自定义光标** - 桌面端独特的鼠标跟随效果
+- **骨架屏加载** - 内容加载时的占位动画
+- **滚动动画** - 元素进入视口时的渐显效果
+- **磁性按钮** - 悬停时的磁性吸附交互
+
+### 交互体验
+- **音乐播放器** - 内置播放器，支持播放/暂停、上下曲、音量控制、进度拖拽
+- **平滑过渡** - 页面间使用 Framer Motion 动画
 
 ## 使用指南
 
 ### 访问管理后台
-为了保持界面整洁，管理入口已从前台隐藏。
+管理入口已从前台隐藏：
 - **本地开发**: `http://localhost:5173/admin`
 - **线上环境**: `https://your-domain.pages.dev/admin`
 
 ### 数据存储说明
 Cloudflare D1 数据库在开发环境和生产环境是**完全隔离**的：
-- `npm run dev` 使用本地 SQLite 文件，数据仅保存在本机。
-- 部署后使用 Cloudflare 边缘数据库，数据保存在云端。
+- `npm run dev` 使用本地 SQLite 文件，数据仅保存在本机
+- 部署后使用 Cloudflare 边缘数据库，数据保存在云端
+
 *注意：本地创建的文章不会自动同步到线上，反之亦然。*
 
 ## 项目结构
 
 ```
 myblog/
-├── myblog_app/          # 前端应用 (React + Vite)
+├── myblog_app/              # 前端 (React + Vite)
 │   ├── src/
-│   │   ├── api/         # API 请求工具
-│   │   ├── components/  # 可复用组件
-│   │   ├── pages/       # 页面组件
-│   │   └── App.jsx      # 应用入口
+│   │   ├── api/             # API 请求
+│   │   ├── components/
+│   │   │   ├── blog/        # 博客组件
+│   │   │   ├── home/        # 首页组件 (Hero, FeaturedPosts)
+│   │   │   ├── layout/      # 布局 (Navbar, Footer)
+│   │   │   └── ui/          # UI 组件
+│   │   │       ├── CustomCursor.jsx
+│   │   │       ├── MagneticButton.jsx
+│   │   │       ├── MusicPlayer.jsx
+│   │   │       ├── ScrollReveal.jsx
+│   │   │       └── Skeleton.jsx
+│   │   ├── data/            # 静态数据 (playlist)
+│   │   ├── pages/
+│   │   │   ├── Home.jsx
+│   │   │   ├── Blog.jsx
+│   │   │   ├── Article.jsx
+│   │   │   ├── About.jsx
+│   │   │   └── Admin.jsx
+│   │   └── App.jsx
 │   └── package.json
 │
-├── myblog_worker/       # 后端服务 (Cloudflare Workers + Hono)
-│   ├── src/
-│   │   └── index.js     # API 路由
-│   ├── schema.sql       # 数据库表结构
-│   ├── wrangler.toml    # Cloudflare 配置
-│   └── package.json
-│
-└── myblog_server/       # 遗留后端 (不再使用)
+└── myblog_worker/           # 后端 (Cloudflare Workers + Hono)
+    ├── src/
+    │   └── index.js         # API 路由
+    ├── schema.sql           # 数据库结构
+    ├── wrangler.toml        # Cloudflare 配置
+    └── package.json
 ```
 
 ## 快速开始
@@ -56,11 +81,11 @@ myblog/
 ### 安装依赖
 
 ```bash
-# 安装后端依赖
+# 后端
 cd myblog_worker
 npm install
 
-# 安装前端依赖
+# 前端
 cd ../myblog_app
 npm install
 ```
@@ -68,18 +93,18 @@ npm install
 ### 启动项目
 
 ```bash
-# 终端 1 - 启动后端 (Cloudflare Workers, 端口 8787)
+# 终端 1 - 启动后端 (端口 8787)
 cd myblog_worker
 npm run dev
 
-# 终端 2 - 启动前端 (Vite, 端口 5173/5174)
+# 终端 2 - 启动前端 (端口 5173)
 cd myblog_app
 npm run dev
 ```
 
-### 调试
+### 调试地址
 
-- **前端地址**: http://localhost:5173
+- **前端**: http://localhost:5173
 - **后端 API**: http://127.0.0.1:8787/api/health
 
 ## 部署
@@ -92,14 +117,13 @@ npx wrangler login
 npm run deploy
 ```
 
-部署成功后会获得 API 地址（例如 `https://myblog-api.xxx.workers.dev`），**请确保将前端域名添加到 `src/index.js` 的 CORS 白名单中**。
+部署后需将前端域名添加到 `src/index.js` 的 CORS 白名单。
 
 ### 前端部署 (Cloudflare Pages)
 
 1. 推送代码到 GitHub
 2. 在 Cloudflare Dashboard 创建 Pages 项目
-3. 连接 GitHub 仓库
-4. 构建设置：
+3. 连接 GitHub 仓库，配置：
    - Root directory: `myblog_app`
    - Build command: `npm run build`
    - Output directory: `dist`
@@ -111,11 +135,13 @@ npm run deploy
 - Vite 7
 - TailwindCSS 4
 - Framer Motion
+- React Router DOM 7
+- React Markdown
 
 **后端**
 - Cloudflare Workers
-- Hono (Web 框架)
-- Cloudflare D1 (SQLite 数据库)
+- Hono
+- Cloudflare D1
 
 ## License
 
