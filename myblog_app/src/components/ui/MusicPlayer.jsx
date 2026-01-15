@@ -149,9 +149,17 @@ export default function MusicPlayer() {
 
     // 鼠标拖动进度条
     const isDraggingRef = useRef(false);
+    const wasPlayingRef = useRef(false); // 记录拖动前是否在播放
 
     const handleProgressMouseDown = useCallback((e) => {
         isDraggingRef.current = true;
+        // 拖动开始时暂停播放，避免炸音
+        if (audioRef.current && !audioRef.current.paused) {
+            wasPlayingRef.current = true;
+            audioRef.current.pause();
+        } else {
+            wasPlayingRef.current = false;
+        }
         handleProgressInteraction(e.clientX);
     }, [handleProgressInteraction]);
 
@@ -161,11 +169,26 @@ export default function MusicPlayer() {
     }, [handleProgressInteraction]);
 
     const handleProgressMouseUp = useCallback(() => {
+        if (!isDraggingRef.current) return;
         isDraggingRef.current = false;
+        // 拖动结束后恢复播放
+        if (wasPlayingRef.current && audioRef.current) {
+            audioRef.current.play().catch(console.error);
+        }
     }, []);
 
     // 触摸滑动进度条
+    const isTouchingRef = useRef(false);
+
     const handleProgressTouch = useCallback((e) => {
+        isTouchingRef.current = true;
+        // 触摸开始时暂停播放
+        if (audioRef.current && !audioRef.current.paused) {
+            wasPlayingRef.current = true;
+            audioRef.current.pause();
+        } else {
+            wasPlayingRef.current = false;
+        }
         const touch = e.touches[0];
         handleProgressInteraction(touch.clientX);
     }, [handleProgressInteraction]);
@@ -174,6 +197,15 @@ export default function MusicPlayer() {
         const touch = e.touches[0];
         handleProgressInteraction(touch.clientX);
     }, [handleProgressInteraction]);
+
+    const handleProgressTouchEnd = useCallback(() => {
+        if (!isTouchingRef.current) return;
+        isTouchingRef.current = false;
+        // 触摸结束后恢复播放
+        if (wasPlayingRef.current && audioRef.current) {
+            audioRef.current.play().catch(console.error);
+        }
+    }, []);
 
     // 为进度条添加鼠标拖动事件
     useEffect(() => {
@@ -197,12 +229,14 @@ export default function MusicPlayer() {
         const options = { passive: true };
         progressEl.addEventListener('touchstart', handleProgressTouch, options);
         progressEl.addEventListener('touchmove', handleProgressTouchMove, options);
+        progressEl.addEventListener('touchend', handleProgressTouchEnd, options);
 
         return () => {
             progressEl.removeEventListener('touchstart', handleProgressTouch, options);
             progressEl.removeEventListener('touchmove', handleProgressTouchMove, options);
+            progressEl.removeEventListener('touchend', handleProgressTouchEnd, options);
         };
-    }, [handleProgressTouch, handleProgressTouchMove]);
+    }, [handleProgressTouch, handleProgressTouchMove, handleProgressTouchEnd]);
 
     // 检测移动端
     useEffect(() => {
