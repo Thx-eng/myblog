@@ -6,6 +6,7 @@ import Blog from './pages/Blog';
 import Article from './pages/Article';
 import About from './pages/About';
 import Admin from './pages/Admin';
+import MusicPlayer from './components/ui/MusicPlayer';
 
 // 路由切换时滚动到顶部
 function ScrollToTop() {
@@ -31,6 +32,7 @@ function App() {
           <Route path="admin" element={<Admin />} />
         </Route>
       </Routes>
+      <MusicPlayer />
     </BrowserRouter>
   );
 }
