@@ -242,24 +242,32 @@ export default function MusicPlayer() {
         };
     }, [volume, changeSong]);
 
-    // 歌曲切换时自动播放
+    // 歌曲切换时加载
     useEffect(() => {
         const audio = audioRef.current;
         if (!audio || !currentSong.src) return;
 
-        // 重置 duration 状态
+        // 重置状态
         setDuration(0);
         setCurrentTime(0);
 
-        // 添加一次性的 loadedmetadata 回调，确保 duration 被正确获取
-        const handleMetadataLoaded = () => {
+        // 更新 duration 的函数
+        const updateDuration = () => {
             if (Number.isFinite(audio.duration) && audio.duration > 0) {
                 setDuration(audio.duration);
             }
         };
 
-        audio.addEventListener('loadedmetadata', handleMetadataLoaded, { once: true });
+        // 监听 loadedmetadata 事件
+        audio.addEventListener('loadedmetadata', updateDuration);
+
+        // 加载音频
         audio.load();
+
+        // 备用方案：延迟检查 duration（防止事件被错过）
+        const timer = setTimeout(() => {
+            updateDuration();
+        }, 100);
 
         // 如果设置了自动播放标志，则播放
         if (shouldAutoPlayRef.current) {
@@ -268,7 +276,8 @@ export default function MusicPlayer() {
         }
 
         return () => {
-            audio.removeEventListener('loadedmetadata', handleMetadataLoaded);
+            audio.removeEventListener('loadedmetadata', updateDuration);
+            clearTimeout(timer);
         };
     }, [currentIndex, currentSong.src]);
 
