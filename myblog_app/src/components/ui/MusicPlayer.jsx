@@ -477,33 +477,26 @@ export default function MusicPlayer() {
                                         const audio = audioRef.current;
                                         const audioDuration = audio?.duration;
                                         const shouldResume = wasPlayingRef.current;
+                                        // 使用 targetTimeRef，它在 onTouchStart/onTouchMove 中已设置
                                         const targetTime = targetTimeRef.current;
 
                                         wasPlayingRef.current = false;
+                                        isDraggingRef.current = false;
 
-                                        // 如果没有有效的目标时间（onTouchStart 失败），直接退出
-                                        if (!isDraggingRef.current || targetTime <= 0) {
-                                            isDraggingRef.current = false;
-                                            // 恢复播放（如果之前在播放）
-                                            if (shouldResume && audio) {
-                                                audio.play().catch(console.error);
+                                        // 如果音频或时长无效，直接退出
+                                        if (!audio || !Number.isFinite(audioDuration) || audioDuration <= 0) {
+                                            if (shouldResume) {
+                                                audio?.play().catch(console.error);
                                             }
                                             return;
                                         }
 
-                                        if (!audio || !Number.isFinite(audioDuration) || audioDuration <= 0) {
-                                            isDraggingRef.current = false;
-                                            return;
-                                        }
-
+                                        // 如果 targetTime 是 0，可能是用户点击了进度条最左端，也是有效的
                                         // 执行跳转
                                         audio.currentTime = targetTime;
 
                                         // 延迟检测跳转结果
                                         setTimeout(() => {
-                                            // 无论成功与否，先重置拖动状态
-                                            isDraggingRef.current = false;
-
                                             if (Math.abs(audio.currentTime - targetTime) > 1) {
                                                 // 跳转失败，使用 Media Fragments 重试
                                                 const baseSrc = currentSong.src.split('#')[0];
