@@ -147,7 +147,6 @@ export default function MusicPlayer() {
     const isDraggingRef = useRef(false);
     const wasPlayingRef = useRef(false); // 记录拖动前是否在播放
     const targetTimeRef = useRef(0); // 保存拖动时的目标时间
-    const isTouchInteractionRef = useRef(false); // 标记是否为触摸交互，防止鼠标事件干扰
     const touchStartValidRef = useRef(false); // 记录 onTouchStart 是否成功处理
 
     // 为进度条添加鼠标拖动事件
@@ -170,9 +169,6 @@ export default function MusicPlayer() {
 
         const handleMouseUp = () => {
             if (!isDraggingRef.current) return;
-            // 如果是触摸交互触发的，忽略鼠标事件，由 onTouchEnd 处理
-            if (isTouchInteractionRef.current) return;
-
             isDraggingRef.current = false;
             // 拖动结束后恢复播放
             if (wasPlayingRef.current && audioRef.current) {
@@ -440,13 +436,6 @@ export default function MusicPlayer() {
                                     }}
                                     onTouchStart={(e) => {
                                         e.preventDefault();
-                                        // 标记这是一次触摸交互，防止 document.mouseup 干扰
-                                        isTouchInteractionRef.current = true;
-                                        // 3秒后清除标志（足够覆盖一次点击周期）
-                                        setTimeout(() => {
-                                            isTouchInteractionRef.current = false;
-                                        }, 3000);
-
                                         const touch = e.touches[0];
                                         const audio = audioRef.current;
                                         const rect = progressRef.current?.getBoundingClientRect();
@@ -532,27 +521,17 @@ export default function MusicPlayer() {
 
                                                 // 监听 canplay 来确认加载完成
                                                 const onCanPlay = () => {
-                                                    // 检查 currentTime 是否已正确更新
-                                                    const isTimeCorrect = Math.abs(audio.currentTime - targetTime) < 1;
+                                                    audio.removeEventListener('canplay', onCanPlay);
 
-                                                    if (!isTimeCorrect && targetTime > 1) {
-                                                        // 如果时间不对，尝试再次设置
-                                                        audio.currentTime = targetTime;
+                                                    // 只有加载完成了才允许 UI 更新
+                                                    isDraggingRef.current = false;
+                                                    wasPlayingRef.current = false;
+
+                                                    if (shouldResume) {
+                                                        audio.play().catch(console.error);
                                                     }
-
-                                                    // 稍微延迟释放状态，给浏览器一点时间同步 currentTime
-                                                    setTimeout(() => {
-                                                        audio.removeEventListener('canplay', onCanPlay);
-                                                        isDraggingRef.current = false;
-                                                        wasPlayingRef.current = false;
-                                                    }, 300); // 300ms 缓冲
                                                 };
                                                 audio.addEventListener('canplay', onCanPlay);
-
-                                                // 立即尝试恢复播放（保留 User Gesture）
-                                                if (shouldResume) {
-                                                    audio.play().catch(console.error);
-                                                }
 
                                                 // 超时保护，防止卡死
                                                 setTimeout(() => {
