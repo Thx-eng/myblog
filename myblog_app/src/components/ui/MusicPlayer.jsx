@@ -545,13 +545,14 @@ export default function MusicPlayer() {
                                                         audio.removeEventListener('canplay', onCanPlay);
                                                         isDraggingRef.current = false;
                                                         wasPlayingRef.current = false;
-
-                                                        if (shouldResume) {
-                                                            audio.play().catch(console.error);
-                                                        }
                                                     }, 300); // 300ms 缓冲
                                                 };
                                                 audio.addEventListener('canplay', onCanPlay);
+
+                                                // 立即尝试恢复播放（保留 User Gesture）
+                                                if (shouldResume) {
+                                                    audio.play().catch(console.error);
+                                                }
 
                                                 // 超时保护，防止卡死
                                                 setTimeout(() => {
