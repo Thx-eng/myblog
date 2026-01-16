@@ -490,11 +490,11 @@ export default function MusicPlayer() {
                                         const shouldResume = wasPlayingRef.current;
                                         const targetTime = targetTimeRef.current;
 
-                                        // 重置状态
-                                        isDraggingRef.current = false;
-                                        wasPlayingRef.current = false;
-
-                                        if (!audio) return;
+                                        if (!audio) {
+                                            isDraggingRef.current = false;
+                                            wasPlayingRef.current = false;
+                                            return;
+                                        }
 
                                         // 获取有效的 duration（优先 audio，其次 state）
                                         let currDuration = audio.duration;
@@ -510,25 +510,41 @@ export default function MusicPlayer() {
                                             audio.currentTime = targetTime;
 
                                             // 2. 检查是否需要 Media Fragments 强力跳转
-                                            // 条件：audio duration 无效，或者设置后位置不对
                                             const seekFailed = !hasValidAudioDuration || (Math.abs(audio.currentTime - targetTime) > 1);
 
                                             if (seekFailed) {
-                                                // 使用 Media Fragments
+                                                // 使用 Media Fragments，注意：此处保持 isDraggingRef = true
+                                                // 防止 timeupdate 也就是 0 把 UI 刷回去
                                                 const baseSrc = currentSong.src.split('#')[0];
                                                 audio.src = `${baseSrc}#t=${targetTime.toFixed(2)}`;
                                                 audio.load();
 
-                                                // 监听一次 canplay 来恢复播放
-                                                if (shouldResume) {
-                                                    const onCanPlay = () => {
+                                                // 监听 canplay 来确认加载完成
+                                                const onCanPlay = () => {
+                                                    audio.removeEventListener('canplay', onCanPlay);
+
+                                                    // 只有加载完成了才允许 UI 更新
+                                                    isDraggingRef.current = false;
+                                                    wasPlayingRef.current = false;
+
+                                                    if (shouldResume) {
                                                         audio.play().catch(console.error);
-                                                        audio.removeEventListener('canplay', onCanPlay);
-                                                    };
-                                                    audio.addEventListener('canplay', onCanPlay);
-                                                }
+                                                    }
+                                                };
+                                                audio.addEventListener('canplay', onCanPlay);
+
+                                                // 超时保护，防止卡死
+                                                setTimeout(() => {
+                                                    audio.removeEventListener('canplay', onCanPlay);
+                                                    if (isDraggingRef.current) {
+                                                        isDraggingRef.current = false;
+                                                        wasPlayingRef.current = false;
+                                                    }
+                                                }, 2000);
+
+                                                return; // 提前返回，不由下方逻辑重置 ref
                                             } else {
-                                                // Seek 似乎成功了，处理播放
+                                                // Seek 成功
                                                 if (shouldResume) {
                                                     audio.play().catch(console.error);
                                                 }
@@ -536,7 +552,6 @@ export default function MusicPlayer() {
 
                                         } else {
                                             // 没法计算时间，恢复 UI
-                                            // 使用 setTimeout 把 UI 拉回去，避免跳动
                                             setTimeout(() => {
                                                 setCurrentTime(audio.currentTime);
                                             }, 0);
@@ -545,6 +560,10 @@ export default function MusicPlayer() {
                                                 audio.play().catch(console.error);
                                             }
                                         }
+
+                                        // 正常路径（非 Media Fragment）重置状态
+                                        isDraggingRef.current = false;
+                                        wasPlayingRef.current = false;
                                     }}
                                     className="relative h-3 md:h-1.5 bg-[var(--color-border)] rounded-full cursor-pointer group"
                                     style={{ touchAction: 'none' }}
