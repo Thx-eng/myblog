@@ -480,9 +480,10 @@ export default function MusicPlayer() {
                                         const targetTime = targetTimeRef.current;
 
                                         wasPlayingRef.current = false;
-                                        isDraggingRef.current = false;
+                                        // 注意：isDraggingRef 在 setTimeout 完成后才重置
 
                                         if (!audio || !Number.isFinite(audioDuration) || audioDuration <= 0) {
+                                            isDraggingRef.current = false;
                                             return;
                                         }
 
@@ -491,11 +492,15 @@ export default function MusicPlayer() {
                                         const onSeeked = () => {
                                             seekSucceeded = true;
                                             audio.removeEventListener('seeked', onSeeked);
+                                            isDraggingRef.current = false;
                                             if (shouldResume) {
                                                 audio.play().catch(console.error);
                                             }
                                         };
                                         audio.addEventListener('seeked', onSeeked);
+
+                                        // 执行跳转
+                                        audio.currentTime = targetTime;
 
                                         // 超时检测
                                         setTimeout(() => {
@@ -505,11 +510,18 @@ export default function MusicPlayer() {
                                                 const baseSrc = currentSong.src.split('#')[0];
                                                 audio.src = `${baseSrc}#t=${targetTime.toFixed(2)}`;
                                                 audio.load();
-                                                if (shouldResume) {
+                                                // 加载完成后再重置
+                                                audio.addEventListener('canplay', () => {
+                                                    isDraggingRef.current = false;
+                                                    if (shouldResume) {
+                                                        audio.play().catch(console.error);
+                                                    }
+                                                }, { once: true });
+                                            } else {
+                                                isDraggingRef.current = false;
+                                                if (!seekSucceeded && shouldResume) {
                                                     audio.play().catch(console.error);
                                                 }
-                                            } else if (!seekSucceeded && shouldResume) {
-                                                audio.play().catch(console.error);
                                             }
                                         }, 200);
                                     }}
