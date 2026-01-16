@@ -295,14 +295,23 @@ export default function MusicPlayer() {
         };
     }, [currentIndex, currentSong.src]);
 
-    // 关闭播放器（暂停并隐藏）
+    // 关闭播放器（移动端暂停并收缩到侧边，桌面端暂停并隐藏）
     const handleClose = useCallback(() => {
         const audio = audioRef.current;
+        // 暂停音乐
         if (audio && !audio.paused) {
             audio.pause();
         }
-        setIsVisible(false);
-    }, []);
+
+        if (isMobile) {
+            // 移动端：收缩到侧边
+            setIsExpanded(false);
+            setIsDocked(true);
+        } else {
+            // 桌面端：完全隐藏
+            setIsVisible(false);
+        }
+    }, [isMobile]);
 
     const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
