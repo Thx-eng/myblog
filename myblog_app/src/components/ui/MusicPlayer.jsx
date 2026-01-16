@@ -87,6 +87,7 @@ export default function MusicPlayer() {
     const [volume, setVolume] = useState(0.7);
     const [isMuted, setIsMuted] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [isFullyBuffered, setIsFullyBuffered] = useState(false); // 追踪音频是否完全缓冲
 
     const currentSong = playlist[currentIndex] || { title: '无歌曲', artist: '', src: '' };
 
@@ -243,12 +244,15 @@ export default function MusicPlayer() {
             console.error('[MusicPlayer] Audio error:', audio.error?.message, audio.error?.code, e);
         };
 
-        // 调试：监控 progress 事件（缓冲进度）
+        // 监控 progress 事件（缓冲进度）
         const handleProgress = () => {
             const buffered = audio.buffered;
-            if (buffered.length > 0) {
+            if (buffered.length > 0 && Number.isFinite(audio.duration) && audio.duration > 0) {
                 const bufferedEnd = buffered.end(buffered.length - 1);
-                console.log('[MusicPlayer] Buffered:', bufferedEnd.toFixed(2), '/', audio.duration?.toFixed(2) || 'NaN');
+                // 检查是否完全缓冲（允许 0.5 秒误差）
+                if (bufferedEnd >= audio.duration - 0.5) {
+                    setIsFullyBuffered(true);
+                }
             }
         };
 
@@ -450,37 +454,47 @@ export default function MusicPlayer() {
                                             audio.pause();
                                         }
 
-                                        // 计算新时间
+                                        // 计算目标时间
                                         const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
                                         const newTime = percent * audioDuration;
                                         setCurrentTime(newTime);
 
-                                        // 使用 seeked 事件确认跳转成功
-                                        let seekSucceeded = false;
-                                        const onSeeked = () => {
-                                            seekSucceeded = true;
-                                            audio.removeEventListener('seeked', onSeeked);
-                                        };
-                                        audio.addEventListener('seeked', onSeeked);
-
-                                        // 尝试跳转
-                                        audio.currentTime = newTime;
-
-                                        // 超时检测 - 如果 seeked 事件没触发，使用 Media Fragments
-                                        setTimeout(() => {
-                                            audio.removeEventListener('seeked', onSeeked);
-                                            if (!seekSucceeded && Math.abs(audio.currentTime - newTime) > 1) {
-                                                // 使用 Media Fragments 重试
-                                                const baseSrc = currentSong.src.split('#')[0];
-                                                audio.src = `${baseSrc}#t=${newTime.toFixed(2)}`;
-                                                audio.load();
+                                        // 检查 seekable 范围是否支持目标时间
+                                        const seekable = audio.seekable;
+                                        let canSeekNormally = false;
+                                        for (let i = 0; i < seekable.length; i++) {
+                                            if (newTime >= seekable.start(i) && newTime <= seekable.end(i)) {
+                                                canSeekNormally = true;
+                                                break;
                                             }
-                                            // 只有在不拖动时才恢复播放（拖动时由 handleMouseUp 处理）
-                                            if (!isDraggingRef.current && wasPlayingRef.current) {
-                                                audio.play().catch(console.error);
-                                                wasPlayingRef.current = false;
-                                            }
-                                        }, 200);
+                                        }
+
+                                        if (canSeekNormally) {
+                                            // 正常 seek
+                                            audio.currentTime = newTime;
+                                        } else {
+                                            // 服务器不支持 Range 请求，使用 Media Fragments 方式
+                                            console.log('[MusicPlayer] Using Media Fragments for seek (server does not support Range requests)');
+                                            const baseSrc = currentSong.src.split('#')[0];
+                                            audio.src = `${baseSrc}#t=${newTime.toFixed(2)}`;
+                                            audio.load();
+
+                                            // 监听 canplay 事件，确认加载完成后恢复播放
+                                            const onCanPlay = () => {
+                                                audio.removeEventListener('canplay', onCanPlay);
+                                                // 恢复播放（如果之前在播放）
+                                                if (wasPlayingRef.current && !isDraggingRef.current) {
+                                                    audio.play().catch(console.error);
+                                                    wasPlayingRef.current = false;
+                                                }
+                                            };
+                                            audio.addEventListener('canplay', onCanPlay);
+
+                                            // 超时保护
+                                            setTimeout(() => {
+                                                audio.removeEventListener('canplay', onCanPlay);
+                                            }, 3000);
+                                        }
 
                                         if (duration !== audioDuration) {
                                             setDuration(audioDuration);
