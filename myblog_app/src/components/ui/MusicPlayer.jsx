@@ -247,12 +247,29 @@ export default function MusicPlayer() {
         const audio = audioRef.current;
         if (!audio || !currentSong.src) return;
 
+        // 重置 duration 状态
+        setDuration(0);
+        setCurrentTime(0);
+
+        // 添加一次性的 loadedmetadata 回调，确保 duration 被正确获取
+        const handleMetadataLoaded = () => {
+            if (Number.isFinite(audio.duration) && audio.duration > 0) {
+                setDuration(audio.duration);
+            }
+        };
+
+        audio.addEventListener('loadedmetadata', handleMetadataLoaded, { once: true });
         audio.load();
+
         // 如果设置了自动播放标志，则播放
         if (shouldAutoPlayRef.current) {
             audio.play().catch(console.error);
             shouldAutoPlayRef.current = false;
         }
+
+        return () => {
+            audio.removeEventListener('loadedmetadata', handleMetadataLoaded);
+        };
     }, [currentIndex, currentSong.src]);
 
     // 关闭播放器（暂停并隐藏）
