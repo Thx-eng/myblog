@@ -423,9 +423,10 @@ export default function MusicPlayer() {
                                                 audio.src = `${baseSrc}#t=${newTime.toFixed(2)}`;
                                                 audio.load();
                                             }
-                                            // 恢复播放
-                                            if (wasPlayingRef.current) {
+                                            // 只有在不拖动时才恢复播放（拖动时由 handleMouseUp 处理）
+                                            if (!isDraggingRef.current && wasPlayingRef.current) {
                                                 audio.play().catch(console.error);
+                                                wasPlayingRef.current = false;
                                             }
                                         }, 200);
 
