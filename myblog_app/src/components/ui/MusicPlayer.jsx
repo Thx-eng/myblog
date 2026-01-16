@@ -147,6 +147,7 @@ export default function MusicPlayer() {
     const isDraggingRef = useRef(false);
     const wasPlayingRef = useRef(false); // 记录拖动前是否在播放
     const targetTimeRef = useRef(0); // 保存拖动时的目标时间
+    const isTouchInteractionRef = useRef(false); // 标记是否为触摸交互，防止鼠标事件干扰
     const touchStartValidRef = useRef(false); // 记录 onTouchStart 是否成功处理
 
     // 为进度条添加鼠标拖动事件
@@ -169,6 +170,9 @@ export default function MusicPlayer() {
 
         const handleMouseUp = () => {
             if (!isDraggingRef.current) return;
+            // 如果是触摸交互触发的，忽略鼠标事件，由 onTouchEnd 处理
+            if (isTouchInteractionRef.current) return;
+
             isDraggingRef.current = false;
             // 拖动结束后恢复播放
             if (wasPlayingRef.current && audioRef.current) {
@@ -436,6 +440,13 @@ export default function MusicPlayer() {
                                     }}
                                     onTouchStart={(e) => {
                                         e.preventDefault();
+                                        // 标记这是一次触摸交互，防止 document.mouseup 干扰
+                                        isTouchInteractionRef.current = true;
+                                        // 3秒后清除标志（足够覆盖一次点击周期）
+                                        setTimeout(() => {
+                                            isTouchInteractionRef.current = false;
+                                        }, 3000);
+
                                         const touch = e.touches[0];
                                         const audio = audioRef.current;
                                         const rect = progressRef.current?.getBoundingClientRect();
