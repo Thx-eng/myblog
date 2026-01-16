@@ -445,6 +445,7 @@ export default function MusicPlayer() {
 
                                         const wasPlaying = !audio.paused;
                                         wasPlayingRef.current = wasPlaying;
+                                        isDraggingRef.current = true;
 
                                         if (wasPlaying) {
                                             audio.pause();
@@ -479,6 +480,7 @@ export default function MusicPlayer() {
                                         const targetTime = targetTimeRef.current;
 
                                         wasPlayingRef.current = false;
+                                        isDraggingRef.current = false;
 
                                         if (!audio || !Number.isFinite(audioDuration) || audioDuration <= 0) {
                                             return;
