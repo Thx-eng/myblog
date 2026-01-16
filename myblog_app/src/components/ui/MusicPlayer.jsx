@@ -322,6 +322,19 @@ export default function MusicPlayer() {
             shouldAutoPlayRef.current = false;
         }
 
+        // 预加载上一首和下一首歌，减少切歌等待时间
+        const nextIndex = (currentIndex + 1) % playlist.length;
+        const prevIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+
+        [nextIndex, prevIndex].forEach(idx => {
+            const song = playlist[idx];
+            if (song?.src && idx !== currentIndex) {
+                const preloadAudio = new Audio();
+                preloadAudio.preload = 'auto';
+                preloadAudio.src = song.src;
+            }
+        });
+
         return () => {
             audio.removeEventListener('loadedmetadata', updateDuration);
             audio.removeEventListener('durationchange', updateDuration);
