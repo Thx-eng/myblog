@@ -481,6 +481,16 @@ export default function MusicPlayer() {
 
                                         wasPlayingRef.current = false;
 
+                                        // 如果没有有效的目标时间（onTouchStart 失败），直接退出
+                                        if (!isDraggingRef.current || targetTime <= 0) {
+                                            isDraggingRef.current = false;
+                                            // 恢复播放（如果之前在播放）
+                                            if (shouldResume && audio) {
+                                                audio.play().catch(console.error);
+                                            }
+                                            return;
+                                        }
+
                                         if (!audio || !Number.isFinite(audioDuration) || audioDuration <= 0) {
                                             isDraggingRef.current = false;
                                             return;
