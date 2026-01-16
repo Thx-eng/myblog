@@ -207,18 +207,6 @@ export default function MusicPlayer() {
         return () => clearTimeout(timer);
     }, [isMobile, isVisible, isExpanded, isPlaying]);
 
-    // 组件初始化时预加载所有歌曲
-    useEffect(() => {
-        playlist.forEach(song => {
-            if (song?.src && !preloadCacheRef.current[song.src]) {
-                const preloadAudio = new Audio();
-                preloadAudio.preload = 'auto';
-                preloadAudio.src = song.src;
-                preloadCacheRef.current[song.src] = preloadAudio;
-            }
-        });
-    }, []); // 只在组件挂载时执行一次
-
     // 音频事件处理
     useEffect(() => {
         const audio = audioRef.current;
