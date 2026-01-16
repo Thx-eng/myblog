@@ -489,6 +489,8 @@ export default function MusicPlayer() {
                                         const audio = audioRef.current;
                                         const shouldResume = wasPlayingRef.current;
                                         const targetTime = targetTimeRef.current;
+                                        // 保存当前位置，用于恢复
+                                        const savedCurrentTime = currentTime;
 
                                         // 重置状态
                                         isDraggingRef.current = false;
@@ -519,8 +521,10 @@ export default function MusicPlayer() {
                                                 }
                                             }, 100);
                                         } else {
-                                            // duration 无效，恢复 UI 到 audio 的当前位置
-                                            setCurrentTime(audio.currentTime);
+                                            // duration 无效，延迟恢复 UI 到之前的位置
+                                            setTimeout(() => {
+                                                setCurrentTime(savedCurrentTime);
+                                            }, 0);
                                             if (shouldResume) {
                                                 audio.play().catch(console.error);
                                             }
