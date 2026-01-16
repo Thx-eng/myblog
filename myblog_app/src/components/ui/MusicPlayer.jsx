@@ -254,8 +254,8 @@ export default function MusicPlayer() {
         const audio = audioRef.current;
         if (!audio || !currentSong.src) return;
 
-        // 重置状态
-        setDuration(0);
+        // 只重置 currentTime，保留 duration 直到新的 duration 准备好
+        // setDuration(0); // 不重置 duration，避免第一次交互时检查失败
         setCurrentTime(0);
 
         // 更新 duration 的函数
