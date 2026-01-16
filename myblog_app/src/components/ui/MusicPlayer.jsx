@@ -147,6 +147,7 @@ export default function MusicPlayer() {
     const isDraggingRef = useRef(false);
     const wasPlayingRef = useRef(false); // 记录拖动前是否在播放
     const targetTimeRef = useRef(0); // 保存拖动时的目标时间
+    const touchStartValidRef = useRef(false); // 记录 onTouchStart 是否成功处理
 
     // 为进度条添加鼠标拖动事件
     useEffect(() => {
@@ -440,13 +441,21 @@ export default function MusicPlayer() {
                                         const touch = e.touches[0];
                                         const audio = audioRef.current;
                                         const rect = progressRef.current?.getBoundingClientRect();
-                                        const audioDuration = audio?.duration;
+                                        // 优先使用 audio.duration，如果无效则使用 state 的 duration
+                                        let audioDuration = audio?.duration;
+                                        if (!Number.isFinite(audioDuration) || audioDuration <= 0) {
+                                            audioDuration = duration;
+                                        }
 
                                         if (!rect || !audio || !Number.isFinite(audioDuration) || audioDuration <= 0) {
                                             // 检查失败，重置状态
                                             isDraggingRef.current = false;
+                                            touchStartValidRef.current = false;
                                             return;
                                         }
+
+                                        // 标记 onTouchStart 成功处理
+                                        touchStartValidRef.current = true;
 
                                         const wasPlaying = !audio.paused;
                                         wasPlayingRef.current = wasPlaying;
@@ -469,7 +478,11 @@ export default function MusicPlayer() {
                                         const touch = e.touches[0];
                                         const audio = audioRef.current;
                                         const rect = progressRef.current?.getBoundingClientRect();
-                                        const audioDuration = audio?.duration;
+                                        // 优先使用 audio.duration，如果无效则使用 state
+                                        let audioDuration = audio?.duration;
+                                        if (!Number.isFinite(audioDuration) || audioDuration <= 0) {
+                                            audioDuration = duration;
+                                        }
                                         if (rect && audio && Number.isFinite(audioDuration) && audioDuration > 0) {
                                             const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
                                             const newTime = percent * audioDuration;
@@ -479,13 +492,28 @@ export default function MusicPlayer() {
                                     }}
                                     onTouchEnd={() => {
                                         const audio = audioRef.current;
-                                        const audioDuration = audio?.duration;
                                         const shouldResume = wasPlayingRef.current;
                                         // 使用 targetTimeRef，它在 onTouchStart/onTouchMove 中已设置
                                         const targetTime = targetTimeRef.current;
 
                                         wasPlayingRef.current = false;
                                         isDraggingRef.current = false;
+
+                                        // 如果 onTouchStart 没有成功处理，不执行跳转
+                                        if (!touchStartValidRef.current) {
+                                            touchStartValidRef.current = false;
+                                            if (shouldResume && audio) {
+                                                audio.play().catch(console.error);
+                                            }
+                                            return;
+                                        }
+                                        touchStartValidRef.current = false;
+
+                                        // 优先使用 audio.duration，如果无效则使用 state
+                                        let audioDuration = audio?.duration;
+                                        if (!Number.isFinite(audioDuration) || audioDuration <= 0) {
+                                            audioDuration = duration;
+                                        }
 
                                         // 如果音频或时长无效，直接退出
                                         if (!audio || !Number.isFinite(audioDuration) || audioDuration <= 0) {
