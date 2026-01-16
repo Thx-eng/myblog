@@ -295,7 +295,7 @@ export default function MusicPlayer() {
     return (
         <>
             {/* audio 元素始终保持挂载 */}
-            <audio ref={audioRef} src={currentSong.src} preload="metadata" />
+            <audio ref={audioRef} src={currentSong.src} preload="auto" />
 
             {/* 隐藏时只显示小按钮 */}
             {!isVisible && (
