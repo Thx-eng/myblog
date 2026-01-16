@@ -263,7 +263,8 @@ export default function MusicPlayer() {
         audio.addEventListener('durationchange', updateDuration);
         audio.addEventListener('canplay', updateDuration);
 
-        // 加载音频
+        // 设置 src 并加载音频（确保事件监听器先注册）
+        audio.src = currentSong.src;
         audio.load();
 
         // 备用方案：多次延迟检查 duration（防止事件被错过）
@@ -301,7 +302,7 @@ export default function MusicPlayer() {
     return (
         <>
             {/* audio 元素始终保持挂载 */}
-            <audio ref={audioRef} src={currentSong.src} preload="auto" />
+            <audio ref={audioRef} preload="auto" />
 
             {/* 隐藏时只显示小按钮 */}
             {!isVisible && (
