@@ -436,112 +436,92 @@ export default function MusicPlayer() {
                                     }}
                                     onTouchStart={(e) => {
                                         e.preventDefault();
-                                        // 先设置拖动状态，防止 timeupdate 更新 currentTime
-                                        isDraggingRef.current = true;
-
                                         const touch = e.touches[0];
                                         const audio = audioRef.current;
                                         const rect = progressRef.current?.getBoundingClientRect();
-                                        // 优先使用 audio.duration，如果无效则使用 state 的 duration
-                                        let audioDuration = audio?.duration;
-                                        if (!Number.isFinite(audioDuration) || audioDuration <= 0) {
-                                            audioDuration = duration;
+
+                                        // 获取有效的 duration
+                                        let validDuration = audio?.duration;
+                                        if (!Number.isFinite(validDuration) || validDuration <= 0) {
+                                            validDuration = duration;
                                         }
 
-                                        if (!rect || !audio || !Number.isFinite(audioDuration) || audioDuration <= 0) {
-                                            // 检查失败，重置状态
-                                            isDraggingRef.current = false;
-                                            touchStartValidRef.current = false;
+                                        // 如果没有有效的 duration，直接返回不做任何操作
+                                        if (!rect || !audio || !Number.isFinite(validDuration) || validDuration <= 0) {
                                             return;
                                         }
 
-                                        // 标记 onTouchStart 成功处理
-                                        touchStartValidRef.current = true;
+                                        // 设置拖动状态
+                                        isDraggingRef.current = true;
+                                        wasPlayingRef.current = !audio.paused;
 
-                                        const wasPlaying = !audio.paused;
-                                        wasPlayingRef.current = wasPlaying;
-
-                                        if (wasPlaying) {
+                                        if (wasPlayingRef.current) {
                                             audio.pause();
                                         }
 
-                                        // 计算新时间并保存到 ref
+                                        // 计算新时间
                                         const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
-                                        const newTime = percent * audioDuration;
+                                        const newTime = percent * validDuration;
                                         targetTimeRef.current = newTime;
                                         setCurrentTime(newTime);
-
-                                        if (duration !== audioDuration) {
-                                            setDuration(audioDuration);
-                                        }
                                     }}
                                     onTouchMove={(e) => {
+                                        if (!isDraggingRef.current) return;
+
                                         const touch = e.touches[0];
                                         const audio = audioRef.current;
                                         const rect = progressRef.current?.getBoundingClientRect();
-                                        // 优先使用 audio.duration，如果无效则使用 state
-                                        let audioDuration = audio?.duration;
-                                        if (!Number.isFinite(audioDuration) || audioDuration <= 0) {
-                                            audioDuration = duration;
+
+                                        let validDuration = audio?.duration;
+                                        if (!Number.isFinite(validDuration) || validDuration <= 0) {
+                                            validDuration = duration;
                                         }
-                                        if (rect && audio && Number.isFinite(audioDuration) && audioDuration > 0) {
+
+                                        if (rect && audio && Number.isFinite(validDuration) && validDuration > 0) {
                                             const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
-                                            const newTime = percent * audioDuration;
+                                            const newTime = percent * validDuration;
                                             targetTimeRef.current = newTime;
                                             setCurrentTime(newTime);
                                         }
                                     }}
                                     onTouchEnd={() => {
+                                        if (!isDraggingRef.current) return;
+
                                         const audio = audioRef.current;
                                         const shouldResume = wasPlayingRef.current;
-                                        // 使用 targetTimeRef，它在 onTouchStart/onTouchMove 中已设置
                                         const targetTime = targetTimeRef.current;
 
-                                        wasPlayingRef.current = false;
+                                        // 重置状态
                                         isDraggingRef.current = false;
+                                        wasPlayingRef.current = false;
 
-                                        // 如果 onTouchStart 没有成功处理，不执行跳转
-                                        if (!touchStartValidRef.current) {
-                                            touchStartValidRef.current = false;
-                                            if (shouldResume && audio) {
-                                                audio.play().catch(console.error);
-                                            }
-                                            return;
-                                        }
-                                        touchStartValidRef.current = false;
+                                        if (!audio) return;
 
-                                        // 优先使用 audio.duration，如果无效则使用 state
-                                        let audioDuration = audio?.duration;
-                                        if (!Number.isFinite(audioDuration) || audioDuration <= 0) {
-                                            audioDuration = duration;
+                                        // 获取有效的 duration
+                                        let validDuration = audio.duration;
+                                        if (!Number.isFinite(validDuration) || validDuration <= 0) {
+                                            validDuration = duration;
                                         }
 
-                                        // 如果音频或时长无效，直接退出
-                                        if (!audio || !Number.isFinite(audioDuration) || audioDuration <= 0) {
-                                            if (shouldResume) {
-                                                audio?.play().catch(console.error);
-                                            }
-                                            return;
-                                        }
-
-                                        // 如果 targetTime 是 0，可能是用户点击了进度条最左端，也是有效的
                                         // 执行跳转
-                                        audio.currentTime = targetTime;
+                                        if (Number.isFinite(validDuration) && validDuration > 0) {
+                                            audio.currentTime = targetTime;
 
-                                        // 延迟检测跳转结果
-                                        setTimeout(() => {
-                                            if (Math.abs(audio.currentTime - targetTime) > 1) {
-                                                // 跳转失败，使用 Media Fragments 重试
-                                                const baseSrc = currentSong.src.split('#')[0];
-                                                audio.src = `${baseSrc}#t=${targetTime.toFixed(2)}`;
-                                                audio.load();
-                                            }
-
-                                            // 恢复播放
-                                            if (shouldResume) {
-                                                audio.play().catch(console.error);
-                                            }
-                                        }, 100);
+                                            // 延迟检测跳转结果
+                                            setTimeout(() => {
+                                                if (Math.abs(audio.currentTime - targetTime) > 1) {
+                                                    // 跳转失败，使用 Media Fragments 重试
+                                                    const baseSrc = currentSong.src.split('#')[0];
+                                                    audio.src = `${baseSrc}#t=${targetTime.toFixed(2)}`;
+                                                    audio.load();
+                                                }
+                                                if (shouldResume) {
+                                                    audio.play().catch(console.error);
+                                                }
+                                            }, 100);
+                                        } else if (shouldResume) {
+                                            audio.play().catch(console.error);
+                                        }
                                     }}
                                     className="relative h-3 md:h-1.5 bg-[var(--color-border)] rounded-full cursor-pointer group"
                                     style={{ touchAction: 'none' }}
