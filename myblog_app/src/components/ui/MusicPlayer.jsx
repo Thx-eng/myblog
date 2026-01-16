@@ -403,101 +403,54 @@ export default function MusicPlayer() {
                                         e.preventDefault();
                                         const audio = audioRef.current;
                                         const rect = progressRef.current?.getBoundingClientRect();
+                                        const audioDuration = audio?.duration;
 
-                                        if (!rect || !audio) {
+                                        if (!rect || !audio || !Number.isFinite(audioDuration) || audioDuration <= 0) {
                                             return;
                                         }
 
-                                        // 计算点击位置的百分比（先保存，不管 duration 是否有效）
-                                        const clickPercent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                                        isDraggingRef.current = true;
+                                        const wasPlaying = !audio.paused;
+                                        wasPlayingRef.current = wasPlaying;
 
-                                        // 执行 seek 的核心函数
-                                        const performSeek = (audioDuration) => {
-                                            isDraggingRef.current = true;
-                                            const wasPlaying = !audio.paused;
-                                            wasPlayingRef.current = wasPlaying;
+                                        if (wasPlaying) {
+                                            audio.pause();
+                                        }
 
-                                            if (wasPlaying) {
-                                                audio.pause();
-                                            }
+                                        // 计算新时间
+                                        const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                                        const newTime = percent * audioDuration;
+                                        setCurrentTime(newTime);
 
-                                            const newTime = clickPercent * audioDuration;
-                                            setCurrentTime(newTime);
-                                            setDuration(audioDuration);
-
-                                            // 使用 seeked 事件确认跳转成功
-                                            let seekSucceeded = false;
-                                            const onSeeked = () => {
-                                                seekSucceeded = true;
-                                                audio.removeEventListener('seeked', onSeeked);
-                                            };
-                                            audio.addEventListener('seeked', onSeeked);
-
-                                            // 尝试跳转
-                                            audio.currentTime = newTime;
-
-                                            // 超时检测 - 如果 seeked 事件没触发，使用 Media Fragments
-                                            setTimeout(() => {
-                                                audio.removeEventListener('seeked', onSeeked);
-                                                if (!seekSucceeded && Math.abs(audio.currentTime - newTime) > 1) {
-                                                    // 使用 Media Fragments 重试
-                                                    const baseSrc = currentSong.src.split('#')[0];
-                                                    audio.src = `${baseSrc}#t=${newTime.toFixed(2)}`;
-                                                    audio.load();
-                                                }
-                                                // 只有在不拖动时才恢复播放（拖动时由 handleMouseUp 处理）
-                                                if (!isDraggingRef.current && wasPlayingRef.current) {
-                                                    audio.play().catch(console.error);
-                                                    wasPlayingRef.current = false;
-                                                }
-                                            }, 200);
+                                        // 使用 seeked 事件确认跳转成功
+                                        let seekSucceeded = false;
+                                        const onSeeked = () => {
+                                            seekSucceeded = true;
+                                            audio.removeEventListener('seeked', onSeeked);
                                         };
+                                        audio.addEventListener('seeked', onSeeked);
 
-                                        const audioDuration = audio.duration;
+                                        // 尝试跳转
+                                        audio.currentTime = newTime;
 
-                                        if (Number.isFinite(audioDuration) && audioDuration > 0) {
-                                            // duration 已加载，立即执行 seek
-                                            performSeek(audioDuration);
-                                        } else {
-                                            // duration 尚未加载，先标记拖动状态，等待 metadata 加载
-                                            isDraggingRef.current = true;
-                                            wasPlayingRef.current = !audio.paused;
-
-                                            if (wasPlayingRef.current) {
-                                                audio.pause();
+                                        // 超时检测 - 如果 seeked 事件没触发，使用 Media Fragments
+                                        setTimeout(() => {
+                                            audio.removeEventListener('seeked', onSeeked);
+                                            if (!seekSucceeded && Math.abs(audio.currentTime - newTime) > 1) {
+                                                // 使用 Media Fragments 重试
+                                                const baseSrc = currentSong.src.split('#')[0];
+                                                audio.src = `${baseSrc}#t=${newTime.toFixed(2)}`;
+                                                audio.load();
                                             }
+                                            // 只有在不拖动时才恢复播放（拖动时由 handleMouseUp 处理）
+                                            if (!isDraggingRef.current && wasPlayingRef.current) {
+                                                audio.play().catch(console.error);
+                                                wasPlayingRef.current = false;
+                                            }
+                                        }, 200);
 
-                                            // 监听 metadata 加载完成
-                                            const onMetadataLoaded = () => {
-                                                audio.removeEventListener('loadedmetadata', onMetadataLoaded);
-                                                audio.removeEventListener('durationchange', onMetadataLoaded);
-                                                clearTimeout(timeoutId);
-
-                                                if (Number.isFinite(audio.duration) && audio.duration > 0) {
-                                                    performSeek(audio.duration);
-                                                } else {
-                                                    // 仍然无效，恢复状态
-                                                    isDraggingRef.current = false;
-                                                    if (wasPlayingRef.current) {
-                                                        audio.play().catch(console.error);
-                                                        wasPlayingRef.current = false;
-                                                    }
-                                                }
-                                            };
-
-                                            audio.addEventListener('loadedmetadata', onMetadataLoaded);
-                                            audio.addEventListener('durationchange', onMetadataLoaded);
-
-                                            // 超时保护（3秒后放弃等待）
-                                            const timeoutId = setTimeout(() => {
-                                                audio.removeEventListener('loadedmetadata', onMetadataLoaded);
-                                                audio.removeEventListener('durationchange', onMetadataLoaded);
-                                                isDraggingRef.current = false;
-                                                if (wasPlayingRef.current) {
-                                                    audio.play().catch(console.error);
-                                                    wasPlayingRef.current = false;
-                                                }
-                                            }, 3000);
+                                        if (duration !== audioDuration) {
+                                            setDuration(audioDuration);
                                         }
                                     }}
                                     onTouchStart={(e) => {
