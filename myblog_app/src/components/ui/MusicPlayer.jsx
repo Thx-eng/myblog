@@ -368,6 +368,14 @@ export default function MusicPlayer() {
                                     ref={progressRef}
                                     onMouseDown={(e) => {
                                         e.preventDefault();
+                                        const rect = progressRef.current?.getBoundingClientRect();
+                                        const audioDuration = audioRef.current?.duration;
+
+                                        // 只有 duration 有效时才处理
+                                        if (!rect || !Number.isFinite(audioDuration) || audioDuration <= 0) {
+                                            return; // 不做任何操作
+                                        }
+
                                         isDraggingRef.current = true;
                                         // 暂停播放避免炸音
                                         if (audioRef.current && !audioRef.current.paused) {
@@ -376,21 +384,28 @@ export default function MusicPlayer() {
                                         } else {
                                             wasPlayingRef.current = false;
                                         }
+
                                         // 计算并设置新时间
-                                        const rect = progressRef.current?.getBoundingClientRect();
-                                        const audioDuration = audioRef.current?.duration;
-                                        if (rect && Number.isFinite(audioDuration) && audioDuration > 0) {
-                                            const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                                            const newTime = percent * audioDuration;
-                                            audioRef.current.currentTime = newTime;
-                                            setCurrentTime(newTime);
-                                            // 强制更新 duration 状态，防止初始加载时为 0 导致进度条显示错误
-                                            if (duration !== audioDuration) {
-                                                setDuration(audioDuration);
-                                            }
+                                        const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                                        const newTime = percent * audioDuration;
+                                        audioRef.current.currentTime = newTime;
+                                        setCurrentTime(newTime);
+
+                                        // 同步 duration 状态
+                                        if (duration !== audioDuration) {
+                                            setDuration(audioDuration);
                                         }
                                     }}
                                     onTouchStart={(e) => {
+                                        const touch = e.touches[0];
+                                        const rect = progressRef.current?.getBoundingClientRect();
+                                        const audioDuration = audioRef.current?.duration;
+
+                                        // 只有 duration 有效时才处理
+                                        if (!rect || !Number.isFinite(audioDuration) || audioDuration <= 0) {
+                                            return; // 不做任何操作
+                                        }
+
                                         // 触摸开始时暂停播放
                                         if (audioRef.current && !audioRef.current.paused) {
                                             wasPlayingRef.current = true;
@@ -398,19 +413,16 @@ export default function MusicPlayer() {
                                         } else {
                                             wasPlayingRef.current = false;
                                         }
+
                                         // 计算并设置新时间
-                                        const touch = e.touches[0];
-                                        const rect = progressRef.current?.getBoundingClientRect();
-                                        const audioDuration = audioRef.current?.duration;
-                                        if (rect && Number.isFinite(audioDuration) && audioDuration > 0) {
-                                            const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
-                                            const newTime = percent * audioDuration;
-                                            audioRef.current.currentTime = newTime;
-                                            setCurrentTime(newTime);
-                                            // 强制更新 duration 状态
-                                            if (duration !== audioDuration) {
-                                                setDuration(audioDuration);
-                                            }
+                                        const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+                                        const newTime = percent * audioDuration;
+                                        audioRef.current.currentTime = newTime;
+                                        setCurrentTime(newTime);
+
+                                        // 同步 duration 状态
+                                        if (duration !== audioDuration) {
+                                            setDuration(audioDuration);
                                         }
                                     }}
                                     onTouchMove={(e) => {
@@ -422,7 +434,6 @@ export default function MusicPlayer() {
                                             const newTime = percent * audioDuration;
                                             audioRef.current.currentTime = newTime;
                                             setCurrentTime(newTime);
-                                            // 强制更新 duration 状态
                                             if (duration !== audioDuration) {
                                                 setDuration(audioDuration);
                                             }
