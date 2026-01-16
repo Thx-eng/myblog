@@ -480,50 +480,32 @@ export default function MusicPlayer() {
                                         const targetTime = targetTimeRef.current;
 
                                         wasPlayingRef.current = false;
-                                        // 注意：isDraggingRef 在 setTimeout 完成后才重置
 
                                         if (!audio || !Number.isFinite(audioDuration) || audioDuration <= 0) {
                                             isDraggingRef.current = false;
                                             return;
                                         }
 
-                                        // 使用 seeked 事件确认跳转成功
-                                        let seekSucceeded = false;
-                                        const onSeeked = () => {
-                                            seekSucceeded = true;
-                                            audio.removeEventListener('seeked', onSeeked);
-                                            isDraggingRef.current = false;
-                                            if (shouldResume) {
-                                                audio.play().catch(console.error);
-                                            }
-                                        };
-                                        audio.addEventListener('seeked', onSeeked);
-
                                         // 执行跳转
                                         audio.currentTime = targetTime;
 
-                                        // 超时检测
+                                        // 延迟检测跳转结果
                                         setTimeout(() => {
-                                            audio.removeEventListener('seeked', onSeeked);
-                                            if (!seekSucceeded && Math.abs(audio.currentTime - targetTime) > 1) {
-                                                // 使用 Media Fragments 重试
+                                            // 无论成功与否，先重置拖动状态
+                                            isDraggingRef.current = false;
+
+                                            if (Math.abs(audio.currentTime - targetTime) > 1) {
+                                                // 跳转失败，使用 Media Fragments 重试
                                                 const baseSrc = currentSong.src.split('#')[0];
                                                 audio.src = `${baseSrc}#t=${targetTime.toFixed(2)}`;
                                                 audio.load();
-                                                // 加载完成后再重置
-                                                audio.addEventListener('canplay', () => {
-                                                    isDraggingRef.current = false;
-                                                    if (shouldResume) {
-                                                        audio.play().catch(console.error);
-                                                    }
-                                                }, { once: true });
-                                            } else {
-                                                isDraggingRef.current = false;
-                                                if (!seekSucceeded && shouldResume) {
-                                                    audio.play().catch(console.error);
-                                                }
                                             }
-                                        }, 200);
+
+                                            // 恢复播放
+                                            if (shouldResume) {
+                                                audio.play().catch(console.error);
+                                            }
+                                        }, 100);
                                     }}
                                     className="relative h-3 md:h-1.5 bg-[var(--color-border)] rounded-full cursor-pointer group"
                                     style={{ touchAction: 'none' }}
