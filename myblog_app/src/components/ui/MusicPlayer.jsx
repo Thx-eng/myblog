@@ -209,7 +209,12 @@ export default function MusicPlayer() {
         const audio = audioRef.current;
         if (!audio) return;
 
-        const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
+        const handleTimeUpdate = () => {
+            // 拖动过程中不更新，避免进度条闪回 0
+            if (!isDraggingRef.current && !wasPlayingRef.current) {
+                setCurrentTime(audio.currentTime);
+            }
+        };
         const handleDurationChange = () => {
             if (Number.isFinite(audio.duration) && audio.duration > 0) {
                 setDuration(audio.duration);
