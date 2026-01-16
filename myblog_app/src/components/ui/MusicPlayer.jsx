@@ -521,15 +521,24 @@ export default function MusicPlayer() {
 
                                                 // 监听 canplay 来确认加载完成
                                                 const onCanPlay = () => {
-                                                    audio.removeEventListener('canplay', onCanPlay);
+                                                    // 检查 currentTime 是否已正确更新
+                                                    const isTimeCorrect = Math.abs(audio.currentTime - targetTime) < 1;
 
-                                                    // 只有加载完成了才允许 UI 更新
-                                                    isDraggingRef.current = false;
-                                                    wasPlayingRef.current = false;
-
-                                                    if (shouldResume) {
-                                                        audio.play().catch(console.error);
+                                                    if (!isTimeCorrect && targetTime > 1) {
+                                                        // 如果时间不对，尝试再次设置
+                                                        audio.currentTime = targetTime;
                                                     }
+
+                                                    // 稍微延迟释放状态，给浏览器一点时间同步 currentTime
+                                                    setTimeout(() => {
+                                                        audio.removeEventListener('canplay', onCanPlay);
+                                                        isDraggingRef.current = false;
+                                                        wasPlayingRef.current = false;
+
+                                                        if (shouldResume) {
+                                                            audio.play().catch(console.error);
+                                                        }
+                                                    }, 300); // 300ms 缓冲
                                                 };
                                                 audio.addEventListener('canplay', onCanPlay);
 
