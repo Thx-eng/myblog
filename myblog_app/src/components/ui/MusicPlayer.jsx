@@ -434,18 +434,22 @@ export default function MusicPlayer() {
                                     }}
                                     onTouchStart={(e) => {
                                         e.preventDefault();
+                                        // 先设置拖动状态，防止 timeupdate 更新 currentTime
+                                        isDraggingRef.current = true;
+
                                         const touch = e.touches[0];
                                         const audio = audioRef.current;
                                         const rect = progressRef.current?.getBoundingClientRect();
                                         const audioDuration = audio?.duration;
 
                                         if (!rect || !audio || !Number.isFinite(audioDuration) || audioDuration <= 0) {
+                                            // 检查失败，重置状态
+                                            isDraggingRef.current = false;
                                             return;
                                         }
 
                                         const wasPlaying = !audio.paused;
                                         wasPlayingRef.current = wasPlaying;
-                                        isDraggingRef.current = true;
 
                                         if (wasPlaying) {
                                             audio.pause();
