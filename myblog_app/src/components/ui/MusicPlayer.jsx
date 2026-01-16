@@ -489,8 +489,6 @@ export default function MusicPlayer() {
                                         const audio = audioRef.current;
                                         const shouldResume = wasPlayingRef.current;
                                         const targetTime = targetTimeRef.current;
-                                        // 保存当前位置，用于恢复
-                                        const savedCurrentTime = currentTime;
 
                                         // 重置状态
                                         isDraggingRef.current = false;
@@ -498,33 +496,51 @@ export default function MusicPlayer() {
 
                                         if (!audio) return;
 
-                                        // 获取有效的 duration
-                                        let validDuration = audio.duration;
-                                        if (!Number.isFinite(validDuration) || validDuration <= 0) {
-                                            validDuration = duration;
+                                        // 获取有效的 duration（优先 audio，其次 state）
+                                        let currDuration = audio.duration;
+                                        const hasValidAudioDuration = Number.isFinite(currDuration) && currDuration > 0;
+                                        if (!hasValidAudioDuration) {
+                                            currDuration = duration;
                                         }
 
-                                        // 只有 duration 和 targetTime 都有效时才执行跳转
-                                        if (Number.isFinite(validDuration) && validDuration > 0 && Number.isFinite(targetTime)) {
+                                        // 只要有算出来的 duration 和 targetTime，就尝试跳转
+                                        if (Number.isFinite(currDuration) && currDuration > 0 && Number.isFinite(targetTime)) {
+
+                                            // 1. 尝试直接设置
                                             audio.currentTime = targetTime;
 
-                                            // 延迟检测跳转结果
-                                            setTimeout(() => {
-                                                if (Math.abs(audio.currentTime - targetTime) > 1) {
-                                                    // 跳转失败，使用 Media Fragments 重试
-                                                    const baseSrc = currentSong.src.split('#')[0];
-                                                    audio.src = `${baseSrc}#t=${targetTime.toFixed(2)}`;
-                                                    audio.load();
+                                            // 2. 检查是否需要 Media Fragments 强力跳转
+                                            // 条件：audio duration 无效，或者设置后位置不对
+                                            const seekFailed = !hasValidAudioDuration || (Math.abs(audio.currentTime - targetTime) > 1);
+
+                                            if (seekFailed) {
+                                                // 使用 Media Fragments
+                                                const baseSrc = currentSong.src.split('#')[0];
+                                                audio.src = `${baseSrc}#t=${targetTime.toFixed(2)}`;
+                                                audio.load();
+
+                                                // 监听一次 canplay 来恢复播放
+                                                if (shouldResume) {
+                                                    const onCanPlay = () => {
+                                                        audio.play().catch(console.error);
+                                                        audio.removeEventListener('canplay', onCanPlay);
+                                                    };
+                                                    audio.addEventListener('canplay', onCanPlay);
                                                 }
+                                            } else {
+                                                // Seek 似乎成功了，处理播放
                                                 if (shouldResume) {
                                                     audio.play().catch(console.error);
                                                 }
-                                            }, 100);
+                                            }
+
                                         } else {
-                                            // duration 无效，延迟恢复 UI 到之前的位置
+                                            // 没法计算时间，恢复 UI
+                                            // 使用 setTimeout 把 UI 拉回去，避免跳动
                                             setTimeout(() => {
-                                                setCurrentTime(savedCurrentTime);
+                                                setCurrentTime(audio.currentTime);
                                             }, 0);
+
                                             if (shouldResume) {
                                                 audio.play().catch(console.error);
                                             }
