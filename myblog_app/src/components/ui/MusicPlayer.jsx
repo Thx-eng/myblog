@@ -258,16 +258,18 @@ export default function MusicPlayer() {
             }
         };
 
-        // 监听 loadedmetadata 事件
+        // 监听多个事件确保能获取到 duration
         audio.addEventListener('loadedmetadata', updateDuration);
+        audio.addEventListener('durationchange', updateDuration);
+        audio.addEventListener('canplay', updateDuration);
 
         // 加载音频
         audio.load();
 
-        // 备用方案：延迟检查 duration（防止事件被错过）
-        const timer = setTimeout(() => {
-            updateDuration();
-        }, 100);
+        // 备用方案：多次延迟检查 duration（防止事件被错过）
+        const timer1 = setTimeout(updateDuration, 100);
+        const timer2 = setTimeout(updateDuration, 500);
+        const timer3 = setTimeout(updateDuration, 1000);
 
         // 如果设置了自动播放标志，则播放
         if (shouldAutoPlayRef.current) {
@@ -277,7 +279,11 @@ export default function MusicPlayer() {
 
         return () => {
             audio.removeEventListener('loadedmetadata', updateDuration);
-            clearTimeout(timer);
+            audio.removeEventListener('durationchange', updateDuration);
+            audio.removeEventListener('canplay', updateDuration);
+            clearTimeout(timer1);
+            clearTimeout(timer2);
+            clearTimeout(timer3);
         };
     }, [currentIndex, currentSong.src]);
 
