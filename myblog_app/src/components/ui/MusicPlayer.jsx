@@ -225,12 +225,42 @@ export default function MusicPlayer() {
         const handlePlay = () => setIsPlaying(true);
         const handlePause = () => setIsPlaying(false);
 
+        // 调试：监控 seeking 事件
+        const handleSeeking = () => {
+            const seekable = audio.seekable;
+            const seekableRanges = [];
+            for (let i = 0; i < seekable.length; i++) {
+                seekableRanges.push(`${seekable.start(i).toFixed(2)}-${seekable.end(i).toFixed(2)}`);
+            }
+            console.log('[MusicPlayer] Seeking to:', audio.currentTime.toFixed(2),
+                '| Seekable ranges:', seekableRanges.join(', ') || 'none',
+                '| Duration:', audio.duration?.toFixed(2) || 'NaN',
+                '| ReadyState:', audio.readyState);
+        };
+
+        // 调试：监控 error 事件
+        const handleError = (e) => {
+            console.error('[MusicPlayer] Audio error:', audio.error?.message, audio.error?.code, e);
+        };
+
+        // 调试：监控 progress 事件（缓冲进度）
+        const handleProgress = () => {
+            const buffered = audio.buffered;
+            if (buffered.length > 0) {
+                const bufferedEnd = buffered.end(buffered.length - 1);
+                console.log('[MusicPlayer] Buffered:', bufferedEnd.toFixed(2), '/', audio.duration?.toFixed(2) || 'NaN');
+            }
+        };
+
         audio.addEventListener('timeupdate', handleTimeUpdate);
         audio.addEventListener('loadedmetadata', handleDurationChange);
         audio.addEventListener('durationchange', handleDurationChange);
         audio.addEventListener('ended', handleEnded);
         audio.addEventListener('play', handlePlay);
         audio.addEventListener('pause', handlePause);
+        audio.addEventListener('seeking', handleSeeking);
+        audio.addEventListener('error', handleError);
+        audio.addEventListener('progress', handleProgress);
 
         audio.volume = volume;
 
@@ -246,6 +276,9 @@ export default function MusicPlayer() {
             audio.removeEventListener('ended', handleEnded);
             audio.removeEventListener('play', handlePlay);
             audio.removeEventListener('pause', handlePause);
+            audio.removeEventListener('seeking', handleSeeking);
+            audio.removeEventListener('error', handleError);
+            audio.removeEventListener('progress', handleProgress);
         };
     }, [volume, changeSong]);
 
