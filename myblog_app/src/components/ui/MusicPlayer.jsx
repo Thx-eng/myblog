@@ -371,27 +371,39 @@ export default function MusicPlayer() {
                                         const rect = progressRef.current?.getBoundingClientRect();
                                         const audioDuration = audioRef.current?.duration;
 
-                                        // 只有 duration 有效时才处理
                                         if (!rect || !Number.isFinite(audioDuration) || audioDuration <= 0) {
-                                            return; // 不做任何操作
+                                            return;
                                         }
 
                                         isDraggingRef.current = true;
-                                        // 暂停播放避免炸音
-                                        if (audioRef.current && !audioRef.current.paused) {
-                                            wasPlayingRef.current = true;
+                                        const wasPlaying = audioRef.current && !audioRef.current.paused;
+                                        wasPlayingRef.current = wasPlaying;
+
+                                        if (wasPlaying) {
                                             audioRef.current.pause();
-                                        } else {
-                                            wasPlayingRef.current = false;
                                         }
 
-                                        // 计算并设置新时间
+                                        // 计算新时间
                                         const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
                                         const newTime = percent * audioDuration;
+
+                                        // 先尝试直接设置 currentTime
                                         audioRef.current.currentTime = newTime;
                                         setCurrentTime(newTime);
 
-                                        // 同步 duration 状态
+                                        // 延迟检测是否跳转成功，如果失败则使用 Media Fragments
+                                        setTimeout(() => {
+                                            if (audioRef.current && Math.abs(audioRef.current.currentTime - newTime) > 1) {
+                                                // 跳转失败，使用 Media Fragments
+                                                const baseSrc = currentSong.src.split('#')[0];
+                                                audioRef.current.src = `${baseSrc}#t=${newTime.toFixed(2)}`;
+                                                audioRef.current.load();
+                                                if (wasPlayingRef.current) {
+                                                    audioRef.current.play().catch(console.error);
+                                                }
+                                            }
+                                        }, 50);
+
                                         if (duration !== audioDuration) {
                                             setDuration(audioDuration);
                                         }
@@ -401,26 +413,25 @@ export default function MusicPlayer() {
                                         const rect = progressRef.current?.getBoundingClientRect();
                                         const audioDuration = audioRef.current?.duration;
 
-                                        // 只有 duration 有效时才处理
                                         if (!rect || !Number.isFinite(audioDuration) || audioDuration <= 0) {
-                                            return; // 不做任何操作
+                                            return;
                                         }
 
-                                        // 触摸开始时暂停播放
-                                        if (audioRef.current && !audioRef.current.paused) {
-                                            wasPlayingRef.current = true;
+                                        const wasPlaying = audioRef.current && !audioRef.current.paused;
+                                        wasPlayingRef.current = wasPlaying;
+
+                                        if (wasPlaying) {
                                             audioRef.current.pause();
-                                        } else {
-                                            wasPlayingRef.current = false;
                                         }
 
-                                        // 计算并设置新时间
+                                        // 计算新时间
                                         const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
                                         const newTime = percent * audioDuration;
+
+                                        // 先尝试直接设置 currentTime
                                         audioRef.current.currentTime = newTime;
                                         setCurrentTime(newTime);
 
-                                        // 同步 duration 状态
                                         if (duration !== audioDuration) {
                                             setDuration(audioDuration);
                                         }
@@ -434,15 +445,32 @@ export default function MusicPlayer() {
                                             const newTime = percent * audioDuration;
                                             audioRef.current.currentTime = newTime;
                                             setCurrentTime(newTime);
-                                            if (duration !== audioDuration) {
-                                                setDuration(audioDuration);
-                                            }
                                         }
                                     }}
                                     onTouchEnd={() => {
-                                        // 触摸结束后恢复播放
-                                        if (wasPlayingRef.current && audioRef.current) {
-                                            audioRef.current.play().catch(console.error);
+                                        const audioDuration = audioRef.current?.duration;
+
+                                        // 检测跳转是否成功，如果失败则使用 Media Fragments
+                                        if (audioRef.current && Number.isFinite(audioDuration) && audioDuration > 0) {
+                                            const targetTime = currentTime;
+                                            const shouldResume = wasPlayingRef.current;
+
+                                            setTimeout(() => {
+                                                if (audioRef.current && Math.abs(audioRef.current.currentTime - targetTime) > 1) {
+                                                    // 跳转失败，使用 Media Fragments
+                                                    const baseSrc = currentSong.src.split('#')[0];
+                                                    audioRef.current.src = `${baseSrc}#t=${targetTime.toFixed(2)}`;
+                                                    audioRef.current.load();
+                                                    if (shouldResume) {
+                                                        audioRef.current.play().catch(console.error);
+                                                    }
+                                                } else if (shouldResume) {
+                                                    // 跳转成功，恢复播放
+                                                    audioRef.current.play().catch(console.error);
+                                                }
+                                                wasPlayingRef.current = false;
+                                            }, 50);
+                                        } else {
                                             wasPlayingRef.current = false;
                                         }
                                     }}
