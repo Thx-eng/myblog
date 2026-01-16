@@ -440,18 +440,9 @@ export default function MusicPlayer() {
                                         const audio = audioRef.current;
                                         const rect = progressRef.current?.getBoundingClientRect();
 
-                                        // 获取有效的 duration
-                                        let validDuration = audio?.duration;
-                                        if (!Number.isFinite(validDuration) || validDuration <= 0) {
-                                            validDuration = duration;
-                                        }
+                                        if (!rect || !audio) return;
 
-                                        // 如果没有有效的 duration，直接返回不做任何操作
-                                        if (!rect || !audio || !Number.isFinite(validDuration) || validDuration <= 0) {
-                                            return;
-                                        }
-
-                                        // 设置拖动状态
+                                        // 先设置拖动状态，即使 duration 无效也要设置
                                         isDraggingRef.current = true;
                                         wasPlayingRef.current = !audio.paused;
 
@@ -459,11 +450,19 @@ export default function MusicPlayer() {
                                             audio.pause();
                                         }
 
-                                        // 计算新时间
-                                        const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
-                                        const newTime = percent * validDuration;
-                                        targetTimeRef.current = newTime;
-                                        setCurrentTime(newTime);
+                                        // 获取有效的 duration
+                                        let validDuration = audio.duration;
+                                        if (!Number.isFinite(validDuration) || validDuration <= 0) {
+                                            validDuration = duration;
+                                        }
+
+                                        // 只有 duration 有效时才更新 UI
+                                        if (Number.isFinite(validDuration) && validDuration > 0) {
+                                            const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+                                            const newTime = percent * validDuration;
+                                            targetTimeRef.current = newTime;
+                                            setCurrentTime(newTime);
+                                        }
                                     }}
                                     onTouchMove={(e) => {
                                         if (!isDraggingRef.current) return;
@@ -503,8 +502,8 @@ export default function MusicPlayer() {
                                             validDuration = duration;
                                         }
 
-                                        // 执行跳转
-                                        if (Number.isFinite(validDuration) && validDuration > 0) {
+                                        // 只有 duration 和 targetTime 都有效时才执行跳转
+                                        if (Number.isFinite(validDuration) && validDuration > 0 && Number.isFinite(targetTime)) {
                                             audio.currentTime = targetTime;
 
                                             // 延迟检测跳转结果
@@ -519,8 +518,12 @@ export default function MusicPlayer() {
                                                     audio.play().catch(console.error);
                                                 }
                                             }, 100);
-                                        } else if (shouldResume) {
-                                            audio.play().catch(console.error);
+                                        } else {
+                                            // duration 无效，恢复 UI 到 audio 的当前位置
+                                            setCurrentTime(audio.currentTime);
+                                            if (shouldResume) {
+                                                audio.play().catch(console.error);
+                                            }
                                         }
                                     }}
                                     className="relative h-3 md:h-1.5 bg-[var(--color-border)] rounded-full cursor-pointer group"
