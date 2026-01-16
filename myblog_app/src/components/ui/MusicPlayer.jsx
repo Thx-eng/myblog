@@ -198,7 +198,7 @@ export default function MusicPlayer() {
 
     // 移动端自动收缩到边缘（几秒后）
     useEffect(() => {
-        if (!isMobile || !isVisible || isExpanded) return;
+        if (!isMobile || isExpanded) return;
         const timer = setTimeout(() => {
             setIsDocked(true);
         }, 5000);
@@ -312,12 +312,22 @@ export default function MusicPlayer() {
             <audio ref={audioRef} preload="auto" />
 
             {/* 隐藏时只显示小按钮 */}
+            {/* 隐藏时只显示小按钮 */}
             {!isVisible && (
                 <motion.button
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    onClick={() => setIsVisible(true)}
-                    className="fixed bottom-24 right-6 z-50 w-12 h-12 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center shadow-lg hover:border-[var(--color-accent)] transition-colors"
+                    initial={{ scale: 0, opacity: 0, x: 0 }}
+                    animate={{
+                        scale: isDocked ? 0.7 : 1,
+                        opacity: isDocked ? 0.4 : 1,
+                        x: isDocked ? 20 : 0
+                    }}
+                    whileHover={{ opacity: 1, scale: 1.1, x: 0 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                        setIsVisible(true);
+                        setIsDocked(false); // 展开时取消收缩
+                    }}
+                    className="fixed bottom-24 right-2 md:right-6 z-50 w-12 h-12 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center shadow-lg hover:border-[var(--color-accent)] transition-colors"
                     title="打开音乐播放器"
                 >
                     <MusicNoteIcon />
