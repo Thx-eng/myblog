@@ -146,6 +146,7 @@ export default function MusicPlayer() {
     // 鼠标拖动进度条
     const isDraggingRef = useRef(false);
     const wasPlayingRef = useRef(false); // 记录拖动前是否在播放
+    const targetTimeRef = useRef(0); // 保存拖动时的目标时间
 
     // 为进度条添加鼠标拖动事件
     useEffect(() => {
@@ -427,6 +428,7 @@ export default function MusicPlayer() {
                                         }
                                     }}
                                     onTouchStart={(e) => {
+                                        e.preventDefault();
                                         const touch = e.touches[0];
                                         const audio = audioRef.current;
                                         const rect = progressRef.current?.getBoundingClientRect();
@@ -443,10 +445,10 @@ export default function MusicPlayer() {
                                             audio.pause();
                                         }
 
-                                        // 计算新时间
+                                        // 计算新时间并保存到 ref
                                         const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
                                         const newTime = percent * audioDuration;
-                                        audio.currentTime = newTime;
+                                        targetTimeRef.current = newTime;
                                         setCurrentTime(newTime);
 
                                         if (duration !== audioDuration) {
@@ -461,7 +463,7 @@ export default function MusicPlayer() {
                                         if (rect && audio && Number.isFinite(audioDuration) && audioDuration > 0) {
                                             const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
                                             const newTime = percent * audioDuration;
-                                            audio.currentTime = newTime;
+                                            targetTimeRef.current = newTime;
                                             setCurrentTime(newTime);
                                         }
                                     }}
@@ -469,7 +471,7 @@ export default function MusicPlayer() {
                                         const audio = audioRef.current;
                                         const audioDuration = audio?.duration;
                                         const shouldResume = wasPlayingRef.current;
-                                        const targetTime = currentTime;
+                                        const targetTime = targetTimeRef.current;
 
                                         wasPlayingRef.current = false;
 
