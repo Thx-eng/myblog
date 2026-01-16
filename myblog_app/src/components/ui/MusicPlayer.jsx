@@ -368,41 +368,52 @@ export default function MusicPlayer() {
                                     ref={progressRef}
                                     onMouseDown={(e) => {
                                         e.preventDefault();
+                                        const audio = audioRef.current;
                                         const rect = progressRef.current?.getBoundingClientRect();
-                                        const audioDuration = audioRef.current?.duration;
+                                        const audioDuration = audio?.duration;
 
-                                        if (!rect || !Number.isFinite(audioDuration) || audioDuration <= 0) {
+                                        if (!rect || !audio || !Number.isFinite(audioDuration) || audioDuration <= 0) {
                                             return;
                                         }
 
                                         isDraggingRef.current = true;
-                                        const wasPlaying = audioRef.current && !audioRef.current.paused;
+                                        const wasPlaying = !audio.paused;
                                         wasPlayingRef.current = wasPlaying;
 
                                         if (wasPlaying) {
-                                            audioRef.current.pause();
+                                            audio.pause();
                                         }
 
                                         // 计算新时间
                                         const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
                                         const newTime = percent * audioDuration;
-
-                                        // 先尝试直接设置 currentTime
-                                        audioRef.current.currentTime = newTime;
                                         setCurrentTime(newTime);
 
-                                        // 延迟检测是否跳转成功，如果失败则使用 Media Fragments
+                                        // 使用 seeked 事件确认跳转成功
+                                        let seekSucceeded = false;
+                                        const onSeeked = () => {
+                                            seekSucceeded = true;
+                                            audio.removeEventListener('seeked', onSeeked);
+                                        };
+                                        audio.addEventListener('seeked', onSeeked);
+
+                                        // 尝试跳转
+                                        audio.currentTime = newTime;
+
+                                        // 超时检测 - 如果 seeked 事件没触发，使用 Media Fragments
                                         setTimeout(() => {
-                                            if (audioRef.current && Math.abs(audioRef.current.currentTime - newTime) > 1) {
-                                                // 跳转失败，使用 Media Fragments
+                                            audio.removeEventListener('seeked', onSeeked);
+                                            if (!seekSucceeded && Math.abs(audio.currentTime - newTime) > 1) {
+                                                // 使用 Media Fragments 重试
                                                 const baseSrc = currentSong.src.split('#')[0];
-                                                audioRef.current.src = `${baseSrc}#t=${newTime.toFixed(2)}`;
-                                                audioRef.current.load();
-                                                if (wasPlayingRef.current) {
-                                                    audioRef.current.play().catch(console.error);
-                                                }
+                                                audio.src = `${baseSrc}#t=${newTime.toFixed(2)}`;
+                                                audio.load();
                                             }
-                                        }, 50);
+                                            // 恢复播放
+                                            if (wasPlayingRef.current) {
+                                                audio.play().catch(console.error);
+                                            }
+                                        }, 200);
 
                                         if (duration !== audioDuration) {
                                             setDuration(audioDuration);
@@ -410,26 +421,25 @@ export default function MusicPlayer() {
                                     }}
                                     onTouchStart={(e) => {
                                         const touch = e.touches[0];
+                                        const audio = audioRef.current;
                                         const rect = progressRef.current?.getBoundingClientRect();
-                                        const audioDuration = audioRef.current?.duration;
+                                        const audioDuration = audio?.duration;
 
-                                        if (!rect || !Number.isFinite(audioDuration) || audioDuration <= 0) {
+                                        if (!rect || !audio || !Number.isFinite(audioDuration) || audioDuration <= 0) {
                                             return;
                                         }
 
-                                        const wasPlaying = audioRef.current && !audioRef.current.paused;
+                                        const wasPlaying = !audio.paused;
                                         wasPlayingRef.current = wasPlaying;
 
                                         if (wasPlaying) {
-                                            audioRef.current.pause();
+                                            audio.pause();
                                         }
 
                                         // 计算新时间
                                         const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
                                         const newTime = percent * audioDuration;
-
-                                        // 先尝试直接设置 currentTime
-                                        audioRef.current.currentTime = newTime;
+                                        audio.currentTime = newTime;
                                         setCurrentTime(newTime);
 
                                         if (duration !== audioDuration) {
@@ -438,41 +448,54 @@ export default function MusicPlayer() {
                                     }}
                                     onTouchMove={(e) => {
                                         const touch = e.touches[0];
+                                        const audio = audioRef.current;
                                         const rect = progressRef.current?.getBoundingClientRect();
-                                        const audioDuration = audioRef.current?.duration;
-                                        if (rect && Number.isFinite(audioDuration) && audioDuration > 0) {
+                                        const audioDuration = audio?.duration;
+                                        if (rect && audio && Number.isFinite(audioDuration) && audioDuration > 0) {
                                             const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
                                             const newTime = percent * audioDuration;
-                                            audioRef.current.currentTime = newTime;
+                                            audio.currentTime = newTime;
                                             setCurrentTime(newTime);
                                         }
                                     }}
                                     onTouchEnd={() => {
-                                        const audioDuration = audioRef.current?.duration;
+                                        const audio = audioRef.current;
+                                        const audioDuration = audio?.duration;
+                                        const shouldResume = wasPlayingRef.current;
+                                        const targetTime = currentTime;
 
-                                        // 检测跳转是否成功，如果失败则使用 Media Fragments
-                                        if (audioRef.current && Number.isFinite(audioDuration) && audioDuration > 0) {
-                                            const targetTime = currentTime;
-                                            const shouldResume = wasPlayingRef.current;
+                                        wasPlayingRef.current = false;
 
-                                            setTimeout(() => {
-                                                if (audioRef.current && Math.abs(audioRef.current.currentTime - targetTime) > 1) {
-                                                    // 跳转失败，使用 Media Fragments
-                                                    const baseSrc = currentSong.src.split('#')[0];
-                                                    audioRef.current.src = `${baseSrc}#t=${targetTime.toFixed(2)}`;
-                                                    audioRef.current.load();
-                                                    if (shouldResume) {
-                                                        audioRef.current.play().catch(console.error);
-                                                    }
-                                                } else if (shouldResume) {
-                                                    // 跳转成功，恢复播放
-                                                    audioRef.current.play().catch(console.error);
-                                                }
-                                                wasPlayingRef.current = false;
-                                            }, 50);
-                                        } else {
-                                            wasPlayingRef.current = false;
+                                        if (!audio || !Number.isFinite(audioDuration) || audioDuration <= 0) {
+                                            return;
                                         }
+
+                                        // 使用 seeked 事件确认跳转成功
+                                        let seekSucceeded = false;
+                                        const onSeeked = () => {
+                                            seekSucceeded = true;
+                                            audio.removeEventListener('seeked', onSeeked);
+                                            if (shouldResume) {
+                                                audio.play().catch(console.error);
+                                            }
+                                        };
+                                        audio.addEventListener('seeked', onSeeked);
+
+                                        // 超时检测
+                                        setTimeout(() => {
+                                            audio.removeEventListener('seeked', onSeeked);
+                                            if (!seekSucceeded && Math.abs(audio.currentTime - targetTime) > 1) {
+                                                // 使用 Media Fragments 重试
+                                                const baseSrc = currentSong.src.split('#')[0];
+                                                audio.src = `${baseSrc}#t=${targetTime.toFixed(2)}`;
+                                                audio.load();
+                                                if (shouldResume) {
+                                                    audio.play().catch(console.error);
+                                                }
+                                            } else if (!seekSucceeded && shouldResume) {
+                                                audio.play().catch(console.error);
+                                            }
+                                        }, 200);
                                     }}
                                     className="relative h-3 md:h-1.5 bg-[var(--color-border)] rounded-full cursor-pointer group"
                                     style={{ touchAction: 'none' }}
