@@ -299,15 +299,36 @@ export default function Admin() {
 
                                 {/* 内容 */}
                                 <div>
-                                    <label className="block text-sm text-[var(--color-muted)] mb-2">
-                                        内容 * <span className="text-xs">(支持 HTML 标签)</span>
-                                    </label>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="block text-sm text-[var(--color-muted)]">
+                                            内容 * <span className="text-xs">(支持 HTML 标签)</span>
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const url = prompt('请输入图片 URL（外部图床链接）：');
+                                                if (url && url.trim()) {
+                                                    const alt = prompt('请输入图片描述（可选）：') || '图片';
+                                                    const imgTag = `<img src="${url.trim()}" alt="${alt}" style="max-width: 100%; border-radius: 8px; margin: 16px 0;" />\n`;
+                                                    setFormData({ ...formData, content: formData.content + imgTag });
+                                                }
+                                            }}
+                                            className="flex items-center gap-2 px-3 py-1.5 text-xs bg-[var(--color-background)] border border-[var(--color-border)] rounded-lg hover:border-[var(--color-accent)] transition-colors cursor-pointer"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                                <polyline points="21 15 16 10 5 21" />
+                                            </svg>
+                                            插入图片
+                                        </button>
+                                    </div>
                                     <textarea
                                         value={formData.content}
                                         onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                                         rows={12}
                                         className="w-full px-4 py-3 bg-[var(--color-background)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--color-accent)] transition-colors resize-none font-mono text-sm"
-                                        placeholder="在此输入文章内容，支持 HTML 标签如 <h2>, <p>, <a> 等"
+                                        placeholder="在此输入文章内容，支持 HTML 标签如 <h2>, <p>, <a>, <img> 等"
                                     />
                                 </div>
 
