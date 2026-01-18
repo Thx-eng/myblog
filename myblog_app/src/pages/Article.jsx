@@ -50,7 +50,7 @@ export default function Article() {
   }, [id]);
 
   if (loading) {
-    return <div className="pb-24" style={{ paddingTop: '50px' }} />;
+    return <div className="pb-24" style={{ paddingTop: '72px' }} />;
   }
 
   if (error) {
@@ -84,7 +84,7 @@ export default function Article() {
   const isHtml = article.content.trim().startsWith('<');
 
   return (
-    <article className="pb-24" style={{ paddingTop: '50px' }}>
+    <article className="pb-24" style={{ paddingTop: '72px' }}>
       <div className="container-custom">
         <div className="max-w-2xl mx-auto">
           {/* 文章头部 */}
