@@ -34,7 +34,7 @@ export default function Blog() {
         : allPosts.filter(post => post.category === activeCategory);
 
     return (
-        <div className="pb-24" style={{ paddingTop: '50px', paddingBottom: 'max(6rem, calc(160px + env(safe-area-inset-bottom, 0px)))' }}>
+        <div className="pb-24" style={{ paddingTop: '72px', paddingBottom: 'max(6rem, calc(160px + env(safe-area-inset-bottom, 0px)))' }}>
             <div className="container-custom">
                 {/* 页面标题 */}
                 <ScrollReveal>
