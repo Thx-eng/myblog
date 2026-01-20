@@ -54,7 +54,7 @@ export default function About() {
     };
 
     return (
-        <div className="pb-32" style={{ paddingTop: '50px' }}>
+        <div style={{ paddingTop: '50px', paddingBottom: '150px' }}>
             <div className="container-custom">
                 <div className="max-w-2xl mx-auto">
                     {/* 标题 */}
