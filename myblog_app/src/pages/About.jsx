@@ -1,10 +1,50 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScrollReveal from '../components/ui/ScrollReveal';
 import MagneticButton from '../components/ui/MagneticButton';
 
+// 引用列表
+const quotes = [
+    { text: "简约是终极的复杂。", author: "列奥纳多·达·芬奇" },
+    { text: "好的设计是尽可能少的设计。", author: "迪特·拉姆斯" },
+    { text: "代码是写给人看的，只是偶尔让计算机执行一下。", author: "Donald Knuth" },
+    { text: "完美不是无以复加，而是无可删减。", author: "安托万·德·圣埃克苏佩里" },
+    { text: "先让它工作，再让它正确，最后让它快。", author: "Kent Beck" },
+];
+
 export default function About() {
     const [copied, setCopied] = useState(false);
+    const [quoteIndex, setQuoteIndex] = useState(0);
+    const [displayText, setDisplayText] = useState('');
+    const [isTyping, setIsTyping] = useState(true);
+    const [showAuthor, setShowAuthor] = useState(false);
+
+    // 打字机效果
+    useEffect(() => {
+        const currentQuote = quotes[quoteIndex].text;
+
+        if (isTyping) {
+            if (displayText.length < currentQuote.length) {
+                const timer = setTimeout(() => {
+                    setDisplayText(currentQuote.slice(0, displayText.length + 1));
+                }, 100); // 打字速度
+                return () => clearTimeout(timer);
+            } else {
+                // 打字完成，显示作者
+                setShowAuthor(true);
+                const timer = setTimeout(() => {
+                    setIsTyping(false);
+                }, 3000); // 停留时间
+                return () => clearTimeout(timer);
+            }
+        } else {
+            // 切换到下一条引用
+            setShowAuthor(false);
+            setDisplayText('');
+            setQuoteIndex((prev) => (prev + 1) % quotes.length);
+            setIsTyping(true);
+        }
+    }, [displayText, isTyping, quoteIndex]);
 
     const handleCopyEmail = (e) => {
         e.preventDefault();
@@ -27,7 +67,7 @@ export default function About() {
 
                     {/* 简介 */}
                     <ScrollReveal delay={0.1}>
-                        <div className="space-y-6 text-[var(--color-secondary)] leading-relaxed">
+                        <div className="space-y-6 text-[var(--color-secondary)] leading-relaxed mb-16">
                             <p>
                                 你好，我是一名热爱技术与设计的开发者。
                             </p>
@@ -46,30 +86,10 @@ export default function About() {
                         </div>
                     </ScrollReveal>
 
-                    {/* 技能 */}
-                    <ScrollReveal delay={0.2}>
-                        <div className="mt-16">
-                            <h2 className="font-heading text-2xl mb-6">专注领域</h2>
-                            <div className="grid grid-cols-2 gap-4">
-                                {['前端开发', '用户体验', '设计系统', '性能优化'].map((skill, index) => (
-                                    <motion.div
-                                        key={skill}
-                                        initial={{ opacity: 0, x: -20 }}
-                                        whileInView={{ opacity: 1, x: 0 }}
-                                        viewport={{ once: true }}
-                                        transition={{ delay: index * 0.1 }}
-                                        className="p-4 border border-[var(--color-border)] rounded-lg"
-                                    >
-                                        <span className="text-sm text-[var(--color-primary)]">{skill}</span>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </div>
-                    </ScrollReveal>
 
                     {/* 联系方式 */}
                     <ScrollReveal delay={0.3}>
-                        <div className="mt-16">
+                        <div style={{ marginTop: '20px' }}>
                             <h2 className="font-heading text-2xl mb-6">保持联系</h2>
                             <p className="text-[var(--color-secondary)] mb-6">
                                 如果你对我的文章有任何想法，或者想一起探讨技术与设计，
@@ -120,15 +140,30 @@ export default function About() {
                         </div>
                     </ScrollReveal>
 
-                    {/* 引用 */}
+                    {/* 引用 - 打字机效果 */}
                     <ScrollReveal delay={0.4}>
-                        <blockquote className="mt-16 p-8 border-l-2 border-[var(--color-accent)] bg-[var(--color-surface)]">
+                        <blockquote className="mt-24 p-8 border-l-2 border-[var(--color-accent)] bg-[var(--color-surface)] min-h-[50px]">
                             <p className="font-heading text-xl italic text-[var(--color-primary)] mb-4">
-                                "简约是终极的复杂。"
+                                "{displayText}
+                                <motion.span
+                                    animate={{ opacity: [1, 0] }}
+                                    transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
+                                    className="inline-block w-[2px] h-5 bg-[var(--color-accent)] ml-1 align-middle"
+                                />
+                                "
                             </p>
-                            <cite className="text-sm text-[var(--color-muted)] not-italic">
-                                — 列奥纳多·达·芬奇
-                            </cite>
+                            <AnimatePresence>
+                                {showAuthor && (
+                                    <motion.cite
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0 }}
+                                        className="text-sm text-[var(--color-muted)] not-italic block"
+                                    >
+                                        — {quotes[quoteIndex].author}
+                                    </motion.cite>
+                                )}
+                            </AnimatePresence>
                         </blockquote>
                     </ScrollReveal>
                 </div>
@@ -136,3 +171,4 @@ export default function About() {
         </div>
     );
 }
+
