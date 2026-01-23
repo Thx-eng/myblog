@@ -69,15 +69,13 @@ export default function About() {
                     <ScrollReveal delay={0.1}>
                         <div className="space-y-6 text-[var(--color-secondary)] leading-relaxed mb-16">
                             <p>
-                                你好，我是一名热爱技术与设计的开发者。
+                                你好，我是一名热爱技术与设计的开发者。                       
                             </p>
 
                             <p>
                                 我相信好的产品来自于对细节的专注和对用户的同理心。
-                                在我的职业生涯中，我始终追求技术与美学的平衡，
-                                致力于创造既实用又优雅的数字体验。
                             </p>
-
+                            
                             <p>
                                 这个博客是我记录思考、分享经验的地方。
                                 在这里，你会看到关于前端开发、设计思维和生活感悟的文章。
