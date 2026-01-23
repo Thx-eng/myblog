@@ -347,7 +347,7 @@ export default function MusicPlayer() {
         };
     }, [currentIndex, currentSong.src]);
 
-    // 关闭播放器（移动端暂停并收缩到侧边，桌面端暂停并隐藏）
+    // 关闭播放器（暂停并收起到迷你模式）
     const handleClose = useCallback(() => {
         const audio = audioRef.current;
         // 暂停音乐
@@ -355,15 +355,9 @@ export default function MusicPlayer() {
             audio.pause();
         }
 
-        if (isMobile) {
-            // 移动端：收缩到侧边
-            setIsExpanded(false);
-            setIsDocked(true);
-        } else {
-            // 桌面端：完全隐藏
-            setIsVisible(false);
-        }
-    }, [isMobile]);
+        // 统一行为：收起到迷你模式
+        setIsExpanded(false);
+    }, []);
 
     const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
