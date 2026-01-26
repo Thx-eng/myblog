@@ -9,6 +9,7 @@ export default function ParticleBackground() {
     const animationRef = useRef(null);
     const particlesRef = useRef([]);
     const mouseRef = useRef({ x: null, y: null });
+    const lastDimensionsRef = useRef({ width: 0, height: 0 });
 
     // 检测是否为暗色模式
     const isDarkMode = useCallback(() => {
@@ -133,9 +134,32 @@ export default function ParticleBackground() {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        particlesRef.current = initParticles(canvas);
+        const newWidth = window.innerWidth;
+        const newHeight = window.innerHeight;
+        const lastDimensions = lastDimensionsRef.current;
+
+        // 检测是否是首次初始化或真正的尺寸变化
+        const isFirstInit = lastDimensions.width === 0;
+        const widthChanged = Math.abs(newWidth - lastDimensions.width) > 10;
+        // 移动端地址栏隐藏/显示通常导致约 50-80px 的高度变化，设置阈值为 100px
+        const heightChangedSignificantly = Math.abs(newHeight - lastDimensions.height) > 100;
+
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+
+        if (isFirstInit || widthChanged || heightChangedSignificantly) {
+            // 首次初始化或真正的尺寸变化：重新创建粒子
+            particlesRef.current = initParticles(canvas);
+            lastDimensionsRef.current = { width: newWidth, height: newHeight };
+        } else {
+            // 移动端滚动导致的小幅高度变化：只调整超出边界的粒子位置
+            particlesRef.current.forEach((particle) => {
+                if (particle.x > newWidth) particle.x = newWidth * Math.random();
+                if (particle.y > newHeight) particle.y = newHeight * Math.random();
+            });
+            // 更新记录的高度
+            lastDimensionsRef.current.height = newHeight;
+        }
     }, [initParticles]);
 
     // 鼠标移动处理
